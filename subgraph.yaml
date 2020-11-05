@@ -1,6 +1,6 @@
 specVersion: 0.0.2
-description: Compound is an open-source protocol for algorithmic, efficient Money Markets on the Ethereum blockchain.
-repository: https://github.com/graphprotocol/compound-V2-subgraph
+description: C.R.E.A.M. Finance is a blockchain agnostic, decentralized peer to peer lending platform based on a fork of Compound Finance.
+repository: https://github.com/CreamFi/compound-v2-subgraph
 schema:
   file: ./schema.graphql
 dataSources:
@@ -8,9 +8,9 @@ dataSources:
     name: Comptroller
     network: mainnet
     source:
-      address: "0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B"
+      address: "0x3d5BC3c8d13dcB8bF317092d84783c2697AE9258"
       abi: Comptroller
-      startBlock: 7700000
+      startBlock: 10579797
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -26,8 +26,6 @@ dataSources:
           file: ./abis/ctoken.json
         - name: PriceOracle
           file: ./abis/priceOracle.json
-        - name: PriceOracle2
-          file: ./abis/priceOracle2.json
         - name: ERC20
           file: ./abis/erc20.json
       eventHandlers:
@@ -67,8 +65,6 @@ templates:
           file: ./abis/ctoken.json
         - name: PriceOracle
           file: ./abis/priceOracle.json
-        - name: PriceOracle2
-          file: ./abis/priceOracle2.json
         - name: ERC20
           file: ./abis/erc20.json
       eventHandlers:
