@@ -1,7 +1,7 @@
 /* eslint-disable prefer-const */ // to satisfy AS compiler
 
 // For each division by 10, add one to exponent to truncate one significant figure
-import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
+import { Address, BigDecimal, BigInt, log, dataSource } from '@graphprotocol/graph-ts'
 import { Market, Comptroller } from '../types/schema'
 import { PriceOracle } from '../types/templates/CToken/PriceOracle'
 import { ERC20 } from '../types/templates/CToken/ERC20'
@@ -15,8 +15,22 @@ import {
   zeroBD,
 } from './helpers'
 
-let cUSDCAddress = '0x44fbebd2f576670a6c33f6fc0b00aa8c5753b322'
-let cETHAddress = '0xd06527d5e56a3495252a528c4987003b712860ee'
+let network = dataSource.network()
+
+let cETHAddress: string =
+  network == 'mainnet'
+    ? '0xd06527d5e56a3495252a528c4987003b712860ee' // mainnet
+    : '0x1ffe17b99b439be0afc831239ddecda2a790ff3a' // bsc
+
+let cUSDCAddress =
+  network == 'mainnet'
+    ? '0x44fbebd2f576670a6c33f6fc0b00aa8c5753b322' // mainnet
+    : '0xd83c88db3a6ca4a32fff1603b0f7ddce01f5f727' // bsc
+
+let blocksPerYear =
+  network == 'mainnet'
+    ? '2102400' // mainnet
+    : '10512000' // bsc
 
 // Used for all cERC20 contracts
 function getTokenPrice(
@@ -27,6 +41,9 @@ function getTokenPrice(
   let comptroller = Comptroller.load('1')
   let oracleAddress = comptroller.priceOracle as Address
   let underlyingPrice: BigDecimal
+  if (oracleAddress.toHexString() == '0x') {
+    return zeroBD
+  }
 
   let mantissaDecimalFactor = 18 - underlyingDecimals + 18
   let bdFactor = exponentToBigDecimal(mantissaDecimalFactor)
@@ -44,15 +61,24 @@ function getUSDCpriceETH(): BigDecimal {
   let comptroller = Comptroller.load('1')
   let oracleAddress = comptroller.priceOracle as Address
   let usdPrice: BigDecimal
+  if (oracleAddress.toHexString() == '0x') {
+    return zeroBD
+  }
 
   // See notes on block number if statement in getTokenPrices()
   let oracle = PriceOracle.bind(oracleAddress)
-  let mantissaDecimalFactorUSDC = 18 - 6 + 18
+  let mantissaDecimalFactorUSDC = 18 + 18
+  if (network == 'bsc') {
+    mantissaDecimalFactorUSDC -= 18
+  } else {
+    mantissaDecimalFactorUSDC -= 6
+  }
   let bdFactorUSDC = exponentToBigDecimal(mantissaDecimalFactorUSDC)
-  usdPrice = oracle
-    .getUnderlyingPrice(Address.fromString(cUSDCAddress))
-    .toBigDecimal()
-    .div(bdFactorUSDC)
+  let underlyingPrice = oracle.try_getUnderlyingPrice(Address.fromString(cUSDCAddress))
+  if (underlyingPrice.reverted) {
+    return zeroBD
+  }
+  usdPrice = underlyingPrice.value.toBigDecimal().div(bdFactorUSDC)
   return usdPrice
 }
 
@@ -68,9 +94,15 @@ export function createMarket(marketAddress: string): Market {
     )
     market.underlyingDecimals = 18
     market.underlyingPrice = BigDecimal.fromString('1')
-    market.underlyingName = 'Ether'
-    market.underlyingSymbol = 'ETH'
     market.underlyingPriceUSD = zeroBD
+
+    if (network == 'mainnet') {
+      market.underlyingName = 'Ether'
+      market.underlyingSymbol = 'ETH'
+    } else {
+      market.underlyingName = 'Binance Coin'
+      market.underlyingSymbol = 'BNB'
+    }
     // It is all other CERC20 contracts
   } else {
     market = new Market(marketAddress)
@@ -130,7 +162,7 @@ export function updateMarket(
     let usdPriceInEth = getUSDCpriceETH()
 
     // if cETH, we only update USD price
-    if (market.id == cETHAddress) {
+    if (market.id == cETHAddress && usdPriceInEth.gt(zeroBD)) {
       market.underlyingPriceUSD = market.underlyingPrice
         .div(usdPriceInEth)
         .truncate(market.underlyingDecimals)
@@ -142,7 +174,7 @@ export function updateMarket(
       )
       market.underlyingPrice = tokenPriceEth.truncate(market.underlyingDecimals)
       // if USDC, we only update ETH price
-      if (market.id != cUSDCAddress) {
+      if (market.id != cUSDCAddress && usdPriceInEth.gt(zeroBD)) {
         market.underlyingPriceUSD = market.underlyingPrice
           .div(usdPriceInEth)
           .truncate(market.underlyingDecimals)
@@ -199,7 +231,7 @@ export function updateMarket(
     market.borrowRate = contract
       .borrowRatePerBlock()
       .toBigDecimal()
-      .times(BigDecimal.fromString('2102400'))
+      .times(BigDecimal.fromString(blocksPerYear))
       .div(mantissaFactorBD)
       .truncate(mantissaFactor)
 
@@ -212,7 +244,7 @@ export function updateMarket(
     } else {
       market.supplyRate = supplyRatePerBlock.value
         .toBigDecimal()
-        .times(BigDecimal.fromString('2102400'))
+        .times(BigDecimal.fromString(blocksPerYear))
         .div(mantissaFactorBD)
         .truncate(mantissaFactor)
     }
