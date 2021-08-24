@@ -18,24 +18,24 @@ import {
 let network = dataSource.network()
 
 let cETHAddress: string =
-  network == 'mainnet'
-    ? '0xd06527d5e56a3495252a528c4987003b712860ee' // mainnet
-    : '0x1ffe17b99b439be0afc831239ddecda2a790ff3a' // bsc
+  network == 'avalanche'
+    ? '0x0000000000000000000000000000000000000000' // avalanche
+    : '0xbfdbe35168953c9d29bdf9a0043f902f233c76e0' // rinkeby
 
 let cUSDCAddress =
-  network == 'mainnet'
-    ? '0x44fbebd2f576670a6c33f6fc0b00aa8c5753b322' // mainnet
-    : '0xd83c88db3a6ca4a32fff1603b0f7ddce01f5f727' // bsc
+  network == 'avalanche'
+    ? '0x0000000000000000000000000000000000000000' // avalanche
+    : '0x4dbcdf9b62e891a7cec5a2568c3f4faf9e8abe2b' // rinkeby
 
 let blocksPerYear =
-  network == 'mainnet'
-    ? '2102400' // mainnet
-    : '10512000' // bsc
+  network == 'avalanche'
+    ? '10512000' // avalanche
+    : '2102400' // rinkeby
 
 let blocksPerTenMin =
-  network == 'mainnet'
-    ? 40 // mainnet
-    : 200 // bsc
+  network == 'avalanche'
+    ? 200 // avalanche
+    : 40 // rinkeby
 
 // Used for all cERC20 contracts
 function getTokenPrice(
@@ -101,12 +101,12 @@ export function createMarket(marketAddress: string): Market {
     market.underlyingPrice = BigDecimal.fromString('1')
     market.underlyingPriceUSD = zeroBD
 
-    if (network == 'mainnet') {
+    if (network == 'avalanche') {
+      market.underlyingName = 'AVAX'
+      market.underlyingSymbol = 'AVAX'
+    } else {
       market.underlyingName = 'Ether'
       market.underlyingSymbol = 'ETH'
-    } else {
-      market.underlyingName = 'Binance Coin'
-      market.underlyingSymbol = 'BNB'
     }
     // It is all other CERC20 contracts
   } else {
