@@ -1,15 +1,15 @@
 {
-  "name": "compound-v2",
+  "name": "lending-subgraph",
   "version": "1.0.0",
-  "repository": "https://github.com/compound-finance/compound-v2-subgraph",
+  "repository": "https://github.com/traderjoe_xyz/lending-subgraph",
   "license": "MIT",
   "scripts": {
-    "codegen": "graph codegen --output-dir src/types/",
-    "build": "graph build --ipfs https://api.staging.thegraph.com/ipfs/ ",
-    "create-local": "graph create graphprotocol/compound-v2 --node http://127.0.0.1:8020",
-    "deploy-local": "graph deploy graphprotocol/compound-v2 --debug --ipfs http://localhost:5001 --node http://127.0.0.1:8020/",
-    "deploy": "graph deploy graphprotocol/compound-v2 --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
-    "deploy-staging": "graph deploy --debug --ipfs https://api.staging.thegraph.com/ipfs/ --node https://api.staging.thegraph.com/deploy/ davekaj/compoundv2",
+    "codegen": "graph codegen --output-dir src/types/ subgraph.yaml",
+    "codegen:rinkeby": "graph codegen --output-dir src/types/ subgraph-rinkeby.yaml",
+    "build": "graph build --ipfs https://api.staging.thegraph.com/ipfs/ subgraph.yaml",
+    "build:rinkeby": "graph build --ipfs https://api.staging.thegraph.com/ipfs/ subgraph-rinkeby.yaml",
+    "deploy": "graph deploy traderjoe-xyz/lending --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ subgraph.yaml",
+    "deploy:rinkeby": "graph deploy traderjoe-xyz/lending-rinkeby --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ subgraph-rinkeby.yaml",
     "prettier": "./node_modules/.bin/prettier —-write '**/*.ts'"
   },
   "devDependencies": {

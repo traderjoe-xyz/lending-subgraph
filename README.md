@@ -1,19 +1,32 @@
-# Compound-V2-subgraph
+# Banker Joe Lending Subgraph
 
-[Compound](https://compound.finance/) is an open-source protocol for algorithmic, efficient Money Markets on the Ethereum blockchain. This Subgraph ingests the V2 contracts of the protocol.
+Lending subgraph forked from `CREAM`(https://cream.finance), a money markets lending protocol on Ethereum/Polygon blockchain.
 
-## Networks and Performance
+**Key changes:**
 
-This subgraph can be found on The Graph Hosted Service at https://thegraph.com/explorer/subgraph/graphprotocol/compound-v2.
+- We add modifications to per-sec based instead of per-block based calculations.
+- Add deployment configs for `Rinkeby` and `Avalanche`
 
-You can also run this subgraph locally, if you wish. Instructions for that can be found in [The Graph Documentation](https://thegraph.com/docs/quick-start).
+## Hosted Service
 
-### ABI
+The subgraph will available via TheGraph hosted service. We will migrate to decentralized mainnet when Avalanche support is available.
 
-The ABI used is `ctoken.json`. It is a stripped down version of the full abi provided by compound, that satisfies the calls we need to make for both cETH and cERC20 contracts. This way we can use 1 ABI file, and one mapping for cETH and cERC20.
+- Subgraph explorer: https://thegraph.com/legacy-explorer/subgraph/traderjoe-xyz/lending
+- Subgraph API: https://api.thegraph.com/subgraphs/name/traderjoe-xyz/lending
 
-## Getting started with querying
+## ABI
 
-Below are a few ways to show how to query the Compound V2 Subgraph for data. The queries show most of the information that is queryable, but there are many other filtering options that can be used, just check out the [querying api](https://github.com/graphprotocol/graph-node/blob/master/docs/graphql-api.md).
+TBD
 
-You can also see the saved queries on the hosted service for examples.
+## Deploy
+
+```
+# authenticate api key
+$ graph auth https://api.thegraph.com/deploy/ <API_KEY>
+
+# deploy rinkeby
+$ yarn codegen:rinkeby; yarn build:rinkeby; yarn deploy:rinkeby
+
+# deploy avax
+$ yarn codegen:avax; yarn build:avax; yarn deploy:avax
+```
