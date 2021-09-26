@@ -9,7 +9,7 @@ import {
   AccrueInterest,
   NewReserveFactor,
   NewMarketInterestRateModel,
-} from '../types/templates/CToken/CToken'
+} from '../types/templates/JToken/JToken'
 import {
   Market,
   Account,
@@ -24,24 +24,24 @@ import {
 import { createMarket, updateMarket } from './markets'
 import {
   createAccount,
-  updateCommonCTokenStats,
+  updateCommonJTokenStats,
   exponentToBigDecimal,
-  cTokenDecimalsBD,
-  cTokenDecimals,
+  jTokenDecimalsBD,
+  jTokenDecimals,
 } from './helpers'
 
-/* Account supplies assets into market and receives cTokens in exchange
+/* Account supplies assets into market and receives jTokens in exchange
  *
  * event.mintAmount is the underlying asset
- * event.mintTokens is the amount of cTokens minted
+ * event.mintTokens is the amount of jTokens minted
  * event.minter is the account
  *
  * Notes
  *    Transfer event will always get emitted with this
- *    Mints originate from the cToken address, not 0x000000, which is typical of ERC-20s
+ *    Mints originate from the jToken address, not 0x000000, which is typical of ERC-20s
  *    No need to updateMarket(), handleAccrueInterest() ALWAYS runs before this
- *    No need to updateCommonCTokenStats, handleTransfer() will
- *    No need to update cTokenBalance, handleTransfer() will
+ *    No need to updateCommonJTokenStats, handleTransfer() will
+ *    No need to update jTokenBalance, handleTransfer() will
  */
 export function handleMint(event: Mint): void {
   let market = Market.load(event.address.toHexString())
@@ -50,37 +50,37 @@ export function handleMint(event: Mint): void {
     .concat('-')
     .concat(event.transactionLogIndex.toString())
 
-  let cTokenAmount = event.params.mintTokens
+  let jTokenAmount = event.params.mintTokens
     .toBigDecimal()
-    .div(cTokenDecimalsBD)
-    .truncate(cTokenDecimals)
+    .div(jTokenDecimalsBD)
+    .truncate(jTokenDecimals)
   let underlyingAmount = event.params.mintAmount
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
 
   let mint = new MintEvent(mintID)
-  mint.amount = cTokenAmount
+  mint.amount = jTokenAmount
   mint.to = event.params.minter
   mint.from = event.address
   mint.blockNumber = event.block.number.toI32()
   mint.blockTime = event.block.timestamp.toI32()
-  mint.cTokenSymbol = market.symbol
+  mint.jTokenSymbol = market.symbol
   mint.underlyingAmount = underlyingAmount
   mint.save()
 }
 
-/*  Account supplies cTokens into market and receives underlying asset in exchange
+/*  Account supplies jTokens into market and receives underlying asset in exchange
  *
  *  event.redeemAmount is the underlying asset
- *  event.redeemTokens is the cTokens
+ *  event.redeemTokens is the jTokens
  *  event.redeemer is the account
  *
  *  Notes
  *    Transfer event will always get emitted with this
  *    No need to updateMarket(), handleAccrueInterest() ALWAYS runs before this
- *    No need to updateCommonCTokenStats, handleTransfer() will
- *    No need to update cTokenBalance, handleTransfer() will
+ *    No need to updateCommonJTokenStats, handleTransfer() will
+ *    No need to update jTokenBalance, handleTransfer() will
  */
 export function handleRedeem(event: Redeem): void {
   let market = Market.load(event.address.toHexString())
@@ -89,27 +89,27 @@ export function handleRedeem(event: Redeem): void {
     .concat('-')
     .concat(event.transactionLogIndex.toString())
 
-  let cTokenAmount = event.params.redeemTokens
+  let jTokenAmount = event.params.redeemTokens
     .toBigDecimal()
-    .div(cTokenDecimalsBD)
-    .truncate(cTokenDecimals)
+    .div(jTokenDecimalsBD)
+    .truncate(jTokenDecimals)
   let underlyingAmount = event.params.redeemAmount
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
 
   let redeem = new RedeemEvent(redeemID)
-  redeem.amount = cTokenAmount
+  redeem.amount = jTokenAmount
   redeem.to = event.address
   redeem.from = event.params.redeemer
   redeem.blockNumber = event.block.number.toI32()
   redeem.blockTime = event.block.timestamp.toI32()
-  redeem.cTokenSymbol = market.symbol
+  redeem.jTokenSymbol = market.symbol
   redeem.underlyingAmount = underlyingAmount
   redeem.save()
 }
 
-/* Borrow assets from the protocol. All values either ETH or ERC20
+/* Borrow assets from the protocol. All values either AVAX or ERC20
  *
  * event.params.totalBorrows = of the whole market (not used right now)
  * event.params.accountBorrows = total of the account
@@ -128,9 +128,9 @@ export function handleBorrow(event: Borrow): void {
   account.hasBorrowed = true
   account.save()
 
-  // Update cTokenStats common for all events, and return the stats to update unique
+  // Update jTokenStats common for all events, and return the stats to update unique
   // values for each event
-  let cTokenStats = updateCommonCTokenStats(
+  let jTokenStats = updateCommonJTokenStats(
     market.id,
     market.symbol,
     accountID,
@@ -144,16 +144,16 @@ export function handleBorrow(event: Borrow): void {
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
 
-  cTokenStats.storedBorrowBalance = event.params.accountBorrows
+  jTokenStats.storedBorrowBalance = event.params.accountBorrows
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
 
-  cTokenStats.accountBorrowIndex = market.borrowIndex
-  cTokenStats.totalUnderlyingBorrowed = cTokenStats.totalUnderlyingBorrowed.plus(
+  jTokenStats.accountBorrowIndex = market.borrowIndex
+  jTokenStats.totalUnderlyingBorrowed = jTokenStats.totalUnderlyingBorrowed.plus(
     borrowAmountBD,
   )
-  cTokenStats.save()
+  jTokenStats.save()
 
   let borrowID = event.transaction.hash
     .toHexString()
@@ -202,9 +202,9 @@ export function handleRepayBorrow(event: RepayBorrow): void {
     createAccount(accountID)
   }
 
-  // Update cTokenStats common for all events, and return the stats to update unique
+  // Update jTokenStats common for all events, and return the stats to update unique
   // values for each event
-  let cTokenStats = updateCommonCTokenStats(
+  let jTokenStats = updateCommonJTokenStats(
     market.id,
     market.symbol,
     accountID,
@@ -218,16 +218,16 @@ export function handleRepayBorrow(event: RepayBorrow): void {
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
 
-  cTokenStats.storedBorrowBalance = event.params.accountBorrows
+  jTokenStats.storedBorrowBalance = event.params.accountBorrows
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
 
-  cTokenStats.accountBorrowIndex = market.borrowIndex
-  cTokenStats.totalUnderlyingRepaid = cTokenStats.totalUnderlyingRepaid.plus(
+  jTokenStats.accountBorrowIndex = market.borrowIndex
+  jTokenStats.totalUnderlyingRepaid = jTokenStats.totalUnderlyingRepaid.plus(
     repayAmountBD,
   )
-  cTokenStats.save()
+  jTokenStats.save()
 
   let repayID = event.transaction.hash
     .toHexString()
@@ -258,17 +258,17 @@ export function handleRepayBorrow(event: RepayBorrow): void {
 /*
  * Liquidate an account who has fell below the collateral factor.
  *
- * event.params.borrower - the borrower who is getting liquidated of their cTokens
- * event.params.cTokenCollateral - the market ADDRESS of the ctoken being liquidated
+ * event.params.borrower - the borrower who is getting liquidated of their jTokens
+ * event.params.jTokenCollateral - the market ADDRESS of the ctoken being liquidated
  * event.params.liquidator - the liquidator
  * event.params.repayAmount - the amount of underlying to be repaid
- * event.params.seizeTokens - cTokens seized (transfer event should handle this)
+ * event.params.seizeTokens - jTokens seized (transfer event should handle this)
  *
  * Notes
  *    No need to updateMarket(), handleAccrueInterest() ALWAYS runs before this.
  *    When calling this function, event RepayBorrow, and event Transfer will be called every
  *    time. This means we can ignore repayAmount. Seize tokens only changes state
- *    of the cTokens, which is covered by transfer. Therefore we only
+ *    of the jTokens, which is covered by transfer. Therefore we only
  *    add liquidation counts in this handler.
  */
 export function handleLiquidateBorrow(event: LiquidateBorrow): void {
@@ -289,51 +289,51 @@ export function handleLiquidateBorrow(event: LiquidateBorrow): void {
   borrower.save()
 
   // For a liquidation, the liquidator pays down the borrow of the underlying
-  // asset. They seize one of potentially many types of cToken collateral of
+  // asset. They seize one of potentially many types of jToken collateral of
   // the underwater borrower. So we must get that address from the event, and
   // the repay token is the event.address
   let marketRepayToken = Market.load(event.address.toHexString())
-  let marketCTokenLiquidated = Market.load(event.params.cTokenCollateral.toHexString())
+  let marketJTokenLiquidated = Market.load(event.params.jTokenCollateral.toHexString())
   let mintID = event.transaction.hash
     .toHexString()
     .concat('-')
     .concat(event.transactionLogIndex.toString())
 
-  let cTokenAmount = event.params.seizeTokens
+  let jTokenAmount = event.params.seizeTokens
     .toBigDecimal()
-    .div(cTokenDecimalsBD)
-    .truncate(cTokenDecimals)
+    .div(jTokenDecimalsBD)
+    .truncate(jTokenDecimals)
   let underlyingRepayAmount = event.params.repayAmount
     .toBigDecimal()
     .div(exponentToBigDecimal(marketRepayToken.underlyingDecimals))
     .truncate(marketRepayToken.underlyingDecimals)
 
   let liquidation = new LiquidationEvent(mintID)
-  liquidation.amount = cTokenAmount
+  liquidation.amount = jTokenAmount
   liquidation.to = event.params.liquidator
   liquidation.from = event.params.borrower
   liquidation.blockNumber = event.block.number.toI32()
   liquidation.blockTime = event.block.timestamp.toI32()
   liquidation.underlyingSymbol = marketRepayToken.underlyingSymbol
   liquidation.underlyingRepayAmount = underlyingRepayAmount
-  liquidation.cTokenSymbol = marketCTokenLiquidated.symbol
+  liquidation.jTokenSymbol = marketJTokenLiquidated.symbol
   liquidation.save()
 }
 
-/* Transferring of cTokens
+/* Transferring of jTokens
  *
- * event.params.from = sender of cTokens
- * event.params.to = receiver of cTokens
+ * event.params.from = sender of jTokens
+ * event.params.to = receiver of jTokens
  * event.params.amount = amount sent
  *
  * Notes
  *    Possible ways to emit Transfer:
  *      seize() - i.e. a Liquidation Transfer (does not emit anything else)
- *      redeemFresh() - i.e. redeeming your cTokens for underlying asset
+ *      redeemFresh() - i.e. redeeming your jTokens for underlying asset
  *      mintFresh() - i.e. you are lending underlying assets to create ctokens
  *      transfer() - i.e. a basic transfer
  *    This function handles all 4 cases. Transfer is emitted alongside the mint, redeem, and seize
- *    events. So for those events, we do not update cToken balances.
+ *    events. So for those events, we do not update jToken balances.
  */
 export function handleTransfer(event: Transfer): void {
   // We don't updateMarket with normal transfers,
@@ -342,11 +342,11 @@ export function handleTransfer(event: Transfer): void {
   let market = Market.load(marketID)
 
   let amountUnderlying = market.exchangeRate.times(
-    event.params.amount.toBigDecimal().div(cTokenDecimalsBD),
+    event.params.amount.toBigDecimal().div(jTokenDecimalsBD),
   )
   let amountUnderylingTruncated = amountUnderlying.truncate(market.underlyingDecimals)
 
-  // Checking if the tx is FROM the cToken contract (i.e. this will not run when minting)
+  // Checking if the tx is FROM the jToken contract (i.e. this will not run when minting)
   // If so, it is a mint, and we don't need to run these calculations
   let accountFromID = event.params.from.toHex()
   if (accountFromID != marketID) {
@@ -355,9 +355,9 @@ export function handleTransfer(event: Transfer): void {
       createAccount(accountFromID)
     }
 
-    // Update cTokenStats common for all events, and return the stats to update unique
+    // Update jTokenStats common for all events, and return the stats to update unique
     // values for each event
-    let cTokenStatsFrom = updateCommonCTokenStats(
+    let jTokenStatsFrom = updateCommonJTokenStats(
       market.id,
       market.symbol,
       accountFromID,
@@ -367,22 +367,22 @@ export function handleTransfer(event: Transfer): void {
       event.logIndex,
     )
 
-    cTokenStatsFrom.cTokenBalance = cTokenStatsFrom.cTokenBalance.minus(
+    jTokenStatsFrom.jTokenBalance = jTokenStatsFrom.jTokenBalance.minus(
       event.params.amount
         .toBigDecimal()
-        .div(cTokenDecimalsBD)
-        .truncate(cTokenDecimals),
+        .div(jTokenDecimalsBD)
+        .truncate(jTokenDecimals),
     )
 
-    cTokenStatsFrom.totalUnderlyingRedeemed = cTokenStatsFrom.totalUnderlyingRedeemed.plus(
+    jTokenStatsFrom.totalUnderlyingRedeemed = jTokenStatsFrom.totalUnderlyingRedeemed.plus(
       amountUnderylingTruncated,
     )
-    cTokenStatsFrom.save()
+    jTokenStatsFrom.save()
   }
 
-  // Checking if the tx is TO the cToken contract (i.e. this will not run when redeeming)
+  // Checking if the tx is TO the jToken contract (i.e. this will not run when redeeming)
   // If so, we ignore it. this leaves an edge case, where someone who accidentally sends
-  // cTokens to a cToken contract, where it will not get recorded. Right now it would
+  // jTokens to a jToken contract, where it will not get recorded. Right now it would
   // be messy to include, so we are leaving it out for now TODO fix this in future
   let accountToID = event.params.to.toHex()
   if (accountToID != marketID) {
@@ -391,9 +391,9 @@ export function handleTransfer(event: Transfer): void {
       createAccount(accountToID)
     }
 
-    // Update cTokenStats common for all events, and return the stats to update unique
+    // Update jTokenStats common for all events, and return the stats to update unique
     // values for each event
-    let cTokenStatsTo = updateCommonCTokenStats(
+    let jTokenStatsTo = updateCommonJTokenStats(
       market.id,
       market.symbol,
       accountToID,
@@ -403,17 +403,17 @@ export function handleTransfer(event: Transfer): void {
       event.logIndex,
     )
 
-    cTokenStatsTo.cTokenBalance = cTokenStatsTo.cTokenBalance.plus(
+    jTokenStatsTo.jTokenBalance = jTokenStatsTo.jTokenBalance.plus(
       event.params.amount
         .toBigDecimal()
-        .div(cTokenDecimalsBD)
-        .truncate(cTokenDecimals),
+        .div(jTokenDecimalsBD)
+        .truncate(jTokenDecimals),
     )
 
-    cTokenStatsTo.totalUnderlyingSupplied = cTokenStatsTo.totalUnderlyingSupplied.plus(
+    jTokenStatsTo.totalUnderlyingSupplied = jTokenStatsTo.totalUnderlyingSupplied.plus(
       amountUnderylingTruncated,
     )
-    cTokenStatsTo.save()
+    jTokenStatsTo.save()
   }
 
   let transferID = event.transaction.hash
@@ -422,12 +422,12 @@ export function handleTransfer(event: Transfer): void {
     .concat(event.transactionLogIndex.toString())
 
   let transfer = new TransferEvent(transferID)
-  transfer.amount = event.params.amount.toBigDecimal().div(cTokenDecimalsBD)
+  transfer.amount = event.params.amount.toBigDecimal().div(jTokenDecimalsBD)
   transfer.to = event.params.to
   transfer.from = event.params.from
   transfer.blockNumber = event.block.number.toI32()
   transfer.blockTime = event.block.timestamp.toI32()
-  transfer.cTokenSymbol = market.symbol
+  transfer.jTokenSymbol = market.symbol
   transfer.save()
 }
 

@@ -2,49 +2,43 @@
 
 // For each division by 10, add one to exponent to truncate one significant figure
 import { Address, BigDecimal, BigInt, log, dataSource } from '@graphprotocol/graph-ts'
-import { Market, Comptroller } from '../types/schema'
-import { PriceOracle } from '../types/templates/CToken/PriceOracle'
-import { ERC20 } from '../types/templates/CToken/ERC20'
-import { AccrueInterest, CToken } from '../types/templates/CToken/CToken'
+import { Market, Joetroller } from '../types/schema'
+import { PriceOracle } from '../types/templates/JToken/PriceOracle'
+import { ERC20 } from '../types/templates/JToken/ERC20'
+import { AccrueInterest, JToken } from '../types/templates/JToken/JToken'
 
 import {
   exponentToBigDecimal,
   mantissaFactor,
   mantissaFactorBD,
-  cTokenDecimalsBD,
+  jTokenDecimalsBD,
   zeroBD,
 } from './helpers'
 
 let network = dataSource.network()
 
-let cETHAddress: string =
+let jAVAXAddress: string =
   network == 'avalanche'
     ? '0x0000000000000000000000000000000000000000' // avalanche
-    : '0xbfdbe35168953c9d29bdf9a0043f902f233c76e0' // rinkeby
+    : '0xaafe9d8346aefd57399e86d91bbfe256dc0dcac0' // rinkeby
 
-let cUSDCAddress =
+let jUSDCAddress =
   network == 'avalanche'
     ? '0x0000000000000000000000000000000000000000' // avalanche
-    : '0x4dbcdf9b62e891a7cec5a2568c3f4faf9e8abe2b' // rinkeby
+    : '0x791c863fe92cf0472c4dfeae375e16348971314f' // rinkeby
 
-let blocksPerYear =
-  network == 'avalanche'
-    ? '10512000' // avalanche
-    : '2102400' // rinkeby
+let blocksPerYear = '31536000'
 
-let blocksPerTenMin =
-  network == 'avalanche'
-    ? 200 // avalanche
-    : 40 // rinkeby
+let blocksPerTenMin = 600
 
-// Used for all cERC20 contracts
-function getTokenPrice(
+// Used for all jERC20 contracts
+function getUnderlyingPriceUSD(
   eventAddress: Address,
   underlyingAddress: Address,
   underlyingDecimals: i32,
 ): BigDecimal {
-  let comptroller = Comptroller.load('1')
-  let oracleAddress = comptroller.priceOracle as Address
+  let joetroller = Joetroller.load('1')
+  let oracleAddress = joetroller.priceOracle as Address
   let underlyingPrice: BigDecimal
   if (oracleAddress.toHexString() == '0x') {
     return zeroBD
@@ -61,16 +55,16 @@ function getTokenPrice(
   return underlyingPrice
 }
 
-// Returns the price of USDC in eth. i.e. 0.005 would mean ETH is $200
-function getUSDCpriceETH(): BigDecimal {
-  let comptroller = Comptroller.load('1')
-  let oracleAddress = comptroller.priceOracle as Address
+// Returns the price of USDC in eth. i.e. 0.005 would mean AVAX is $200
+function getUSDCpriceAVAX(): BigDecimal {
+  let joetroller = Joetroller.load('1')
+  let oracleAddress = joetroller.priceOracle as Address
   let usdPrice: BigDecimal
   if (oracleAddress.toHexString() == '0x') {
     return zeroBD
   }
 
-  // See notes on block number if statement in getTokenPrices()
+  // See notes on block number if statement in getUnderlyingPriceUSDs()
   let oracle = PriceOracle.bind(oracleAddress)
   let mantissaDecimalFactorUSDC = 18 + 18
   if (network == 'bsc') {
@@ -79,7 +73,7 @@ function getUSDCpriceETH(): BigDecimal {
     mantissaDecimalFactorUSDC -= 6
   }
   let bdFactorUSDC = exponentToBigDecimal(mantissaDecimalFactorUSDC)
-  let underlyingPrice = oracle.try_getUnderlyingPrice(Address.fromString(cUSDCAddress))
+  let underlyingPrice = oracle.try_getUnderlyingPrice(Address.fromString(jUSDCAddress))
   if (underlyingPrice.reverted) {
     return zeroBD
   }
@@ -89,16 +83,16 @@ function getUSDCpriceETH(): BigDecimal {
 
 export function createMarket(marketAddress: string): Market {
   let market: Market
-  let contract = CToken.bind(Address.fromString(marketAddress))
+  let contract = JToken.bind(Address.fromString(marketAddress))
 
-  // It is CETH, which has a slightly different interface
-  if (marketAddress == cETHAddress) {
+  // It is JUSDCJ, which has a slightly different interface
+  if (marketAddress == jAVAXAddress) {
     market = new Market(marketAddress)
     market.underlyingAddress = Address.fromString(
       '0x0000000000000000000000000000000000000000',
     )
     market.underlyingDecimals = 18
-    market.underlyingPrice = BigDecimal.fromString('1')
+    market.underlyingPrice = zeroBD
     market.underlyingPriceUSD = zeroBD
 
     if (network == 'avalanche') {
@@ -106,7 +100,7 @@ export function createMarket(marketAddress: string): Market {
       market.underlyingSymbol = 'AVAX'
     } else {
       market.underlyingName = 'Ether'
-      market.underlyingSymbol = 'ETH'
+      market.underlyingSymbol = 'AVAX'
     }
     // It is all other CERC20 contracts
   } else {
@@ -118,7 +112,7 @@ export function createMarket(marketAddress: string): Market {
     market.underlyingSymbol = underlyingContract.symbol()
     market.underlyingPriceUSD = zeroBD
     market.underlyingPrice = zeroBD
-    if (marketAddress == cUSDCAddress) {
+    if (marketAddress == jUSDCAddress) {
       market.underlyingPriceUSD = BigDecimal.fromString('1')
     }
   }
@@ -143,7 +137,7 @@ export function createMarket(marketAddress: string): Market {
   market.totalBorrows = zeroBD
   market.totalSupply = zeroBD
 
-  market.accrualBlockNumber = 0
+  market.accrualBlockTimestamp = 0
   market.blockTimestamp = 0
   market.borrowIndex = zeroBD
   market.reserveFactor = reserveFactor.reverted ? BigInt.fromI32(0) : reserveFactor.value
@@ -163,55 +157,32 @@ export function updateMarket(event: AccrueInterest): Market {
   }
 
   // Only updateMarket if it has not been updated this block
-  if (market.accrualBlockNumber != blockNumber) {
+  if (market.accrualBlockTimestamp != blockTimestamp) {
     let contractAddress = Address.fromString(market.id)
-    let contract = CToken.bind(contractAddress)
+    let contract = JToken.bind(contractAddress)
 
-    let usdPriceInEth = Market.load(cUSDCAddress).underlyingPrice
-    // update price every 10 minutes
+    const underlyingPriceUSD = market.underlyingPriceUSD
     if (
-      usdPriceInEth.equals(zeroBD) ||
-      blockNumber - market.accrualBlockNumber > blocksPerTenMin
+      underlyingPriceUSD.equals(zeroBD) ||
+      blockTimestamp - market.accrualBlockTimestamp > blocksPerTenMin
     ) {
-      usdPriceInEth = getUSDCpriceETH()
-    }
-
-    // if cETH, we only update USD price
-    if (market.id == cETHAddress && usdPriceInEth.gt(zeroBD)) {
-      market.underlyingPriceUSD = market.underlyingPrice
-        .div(usdPriceInEth)
-        .truncate(market.underlyingDecimals)
-    } else {
-      let tokenPriceEth = market.underlyingPrice
-      if (
-        tokenPriceEth.equals(zeroBD) ||
-        blockNumber - market.accrualBlockNumber > blocksPerTenMin
-      ) {
-        tokenPriceEth = getTokenPrice(
-          contractAddress,
-          market.underlyingAddress as Address,
-          market.underlyingDecimals,
-        )
-      }
-      market.underlyingPrice = tokenPriceEth.truncate(market.underlyingDecimals)
-      // if USDC, we only update ETH price
-      if (market.id != cUSDCAddress && usdPriceInEth.gt(zeroBD)) {
-        market.underlyingPriceUSD = market.underlyingPrice
-          .div(usdPriceInEth)
-          .truncate(market.underlyingDecimals)
-      }
+      market.underlyingPriceUSD = getUnderlyingPriceUSD(
+        contractAddress,
+        market.underlyingAddress as Address,
+        market.underlyingDecimals,
+      ).truncate(market.underlyingDecimals)
     }
 
     market.totalSupply = contract
       .totalSupply()
       .toBigDecimal()
-      .div(cTokenDecimalsBD)
+      .div(jTokenDecimalsBD)
 
     /* Exchange rate explanation
        In Practice
-        - If you call the cDAI contract on etherscan it comes back (2.0 * 10^26)
-        - If you call the cUSDC contract on etherscan it comes back (2.0 * 10^14)
-        - The real value is ~0.02. So cDAI is off by 10^28, and cUSDC 10^16
+        - If you call the jDAI contract on etherscan it comes back (2.0 * 10^26)
+        - If you call the jUSDC contract on etherscan it comes back (2.0 * 10^14)
+        - The real value is ~0.02. So jDAI is off by 10^28, and jUSDC 10^16
        How to calculate for tokens with different decimals
         - Must div by tokenDecimals, 10^market.underlyingDecimals
         - Must multiply by ctokenDecimals, 10^8
@@ -221,13 +192,13 @@ export function updateMarket(event: AccrueInterest): Market {
     // Only update if it has not been updated in 10 minutes to speed up syncing process
     if (
       market.exchangeRate.equals(zeroBD) ||
-      blockNumber - market.accrualBlockNumber > blocksPerTenMin
+      blockTimestamp - market.accrualBlockTimestamp > blocksPerTenMin
     ) {
       market.exchangeRate = contract
         .exchangeRateStored()
         .toBigDecimal()
         .div(exponentToBigDecimal(market.underlyingDecimals))
-        .times(cTokenDecimalsBD)
+        .times(jTokenDecimalsBD)
         .div(mantissaFactorBD)
         .truncate(mantissaFactor)
     }
@@ -238,7 +209,7 @@ export function updateMarket(event: AccrueInterest): Market {
       .truncate(mantissaFactor)
 
     // Only update if it has not been updated in 10 minutes to speed up syncing process
-    if (blockNumber - market.accrualBlockNumber > blocksPerTenMin) {
+    if (blockTimestamp - market.accrualBlockTimestamp > blocksPerTenMin) {
       market.reserves = contract
         .totalReserves()
         .toBigDecimal()
@@ -256,10 +227,10 @@ export function updateMarket(event: AccrueInterest): Market {
       .truncate(market.underlyingDecimals)
 
     // Only update if it has not been updated in 10 minutes to speed up syncing process
-    if (blockNumber - market.accrualBlockNumber > blocksPerTenMin) {
+    if (blockTimestamp - market.accrualBlockTimestamp > blocksPerTenMin) {
       // Must convert to BigDecimal, and remove 10^18 that is used for Exp in Compound Solidity
       market.borrowRate = contract
-        .borrowRatePerBlock()
+        .borrowRatePerSecond()
         .toBigDecimal()
         .times(BigDecimal.fromString(blocksPerYear))
         .div(mantissaFactorBD)
@@ -267,12 +238,12 @@ export function updateMarket(event: AccrueInterest): Market {
 
       // This fails on only the first call to cZRX. It is unclear why, but otherwise it works.
       // So we handle it like this.
-      let supplyRatePerBlock = contract.try_supplyRatePerBlock()
-      if (supplyRatePerBlock.reverted) {
-        log.info('***CALL FAILED*** : cERC20 supplyRatePerBlock() reverted', [])
+      let supplyRatePerSecond = contract.try_supplyRatePerSecond()
+      if (supplyRatePerSecond.reverted) {
+        log.info('***CALL FAILED*** : jERC20 supplyRatePerSecond() reverted', [])
         market.supplyRate = zeroBD
       } else {
-        market.supplyRate = supplyRatePerBlock.value
+        market.supplyRate = supplyRatePerSecond.value
           .toBigDecimal()
           .times(BigDecimal.fromString(blocksPerYear))
           .div(mantissaFactorBD)
@@ -280,7 +251,7 @@ export function updateMarket(event: AccrueInterest): Market {
       }
     }
 
-    market.accrualBlockNumber = blockNumber
+    market.accrualBlockTimestamp = blockTimestamp
     market.blockTimestamp = blockTimestamp
 
     market.totalInterestAccumulatedExact = market.totalInterestAccumulatedExact.plus(
