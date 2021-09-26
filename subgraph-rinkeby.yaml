@@ -5,29 +5,29 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: Comptroller
-    network: rinkeby
+    name: Joetroller
+    network: rinkeby 
     source:
-      address: '0x4dB8F89cb631A473e8840cb4eFF10aEee0C53131'
-      abi: Comptroller
-      startBlock: 9122290
+      address: "0x5b0a2Fa14808E34C5518E19f0DBc39F61d080B11"
+      abi: Joetroller
+      startBlock: 9000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
       language: wasm/assemblyscript
-      file: ./src/mappings/comptroller.ts
+      file: ./src/mappings/joetroller.ts
       entities:
-        - Comptroller
+        - Joetroller
         - Market
       abis:
-        - name: Comptroller
-          file: ./abis/comptroller.json
-        - name: CToken
-          file: ./abis/ctoken.json
+        - name: Joetroller
+          file: ./node_modules/@traderjoe-xyz/lending/abi/Joetroller.json
+        - name: JToken
+          file: ./node_modules/@traderjoe-xyz/lending/abi/JToken.json
         - name: PriceOracle
-          file: ./abis/priceOracle.json
+          file: ./node_modules/@traderjoe-xyz/lending/abi/PriceOracle.json
         - name: ERC20
-          file: ./abis/erc20.json
+          file: ./abis/Erc20.json
       eventHandlers:
         - event: MarketListed(address)
           handler: handleMarketListed
@@ -44,27 +44,27 @@ dataSources:
         - event: NewPriceOracle(address,address)
           handler: handleNewPriceOracle
 templates:
-  - name: CToken
+  - name: JToken
     kind: ethereum/contract
-    network: rinkeby
+    network: rinkeby 
     source:
-      abi: CToken
+      abi: JToken
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
       language: wasm/assemblyscript
-      file: ./src/mappings/ctoken.ts
+      file: ./src/mappings/jToken.ts
       entities:
         - User
         - Market
-        - CTokenInfo
+        - JTokenInfo
       abis:
-        - name: CToken
-          file: ./abis/ctoken.json
+        - name: JToken
+          file: ./node_modules/@traderjoe-xyz/lending/abi/JToken.json
         - name: PriceOracle
-          file: ./abis/priceOracle.json
+          file: ./node_modules/@traderjoe-xyz/lending/abi/PriceOracle.json
         - name: ERC20
-          file: ./abis/erc20.json
+          file: ./abis/Erc20.json
       eventHandlers:
         - event: Mint(address,uint256,uint256)
           handler: handleMint

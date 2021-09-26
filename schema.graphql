@@ -1,10 +1,10 @@
 """
-The Comptroller type has protocol level variables stored
+The Joetroller type has protocol level variables stored
 """
-type Comptroller @entity {
+type Joetroller @entity {
     "ID is set to 1"
     id: ID!
-    "Address of price oracle the comptroller uses"
+    "Address of price oracle the joetroller uses"
     priceOracle: Bytes
     "Factor used to determine repayAmount for liquidating"
     closeFactor: BigInt
@@ -15,46 +15,46 @@ type Comptroller @entity {
 }
 
 """
-Market stores all high level variables for a cToken market
+Market stores all high level variables for a jToken market
 """
 type Market @entity {
     #Fields that match compounds API
-    "Yearly borrow rate. With 2102400 blocks per year"
+    "Yearly borrow rate. With 31,536,000 secs per year"
     borrowRate: BigDecimal!
-    "The cToken contract balance of ERC20 or ETH"
+    "The jToken contract balance of ERC20 or AVAX"
     cash: BigDecimal!
     "Collateral factor determining how much one can borrow"
     collateralFactor: BigDecimal!
-    "Exchange rate of tokens / cTokens"
+    "Exchange rate of tokens / jTokens"
     exchangeRate:  BigDecimal!
     "Address of the interest rate model"
     interestRateModelAddress: Bytes!
-    "Name of the cToken"
+    "Name of the jToken"
     name: String!
     "Reserves stored in the contract"
     reserves: BigDecimal!
-    "Yearly supply rate. With 2104400 blocks per year"
+    "Yearly supply rate. With 31,536, 000 secs per year"
     supplyRate: BigDecimal!
-    "CToken symbol"
+    "JToken symbol"
     symbol: String!
-    "CToken address"
+    "JToken address"
     id: ID!
     "Borrows in the market"
     totalBorrows: BigDecimal!
-    "CToken supply. CTokens have 8 decimals"
+    "JToken supply. JTokens have 8 decimals"
     totalSupply: BigDecimal!
     "Underlying token address"
     underlyingAddress: Bytes!
     "Underlying token name"
     underlyingName: String!
-    "Underlying price of token in ETH (ex. 0.007 DAI)"
+    "Underlying price of token in USD"
     underlyingPrice: BigDecimal!
     "Underlying token symbol"
     underlyingSymbol: String!
 
     # Fields that are not in compounds api
     "Block the market is updated to"
-    accrualBlockNumber: Int!
+    accrualBlockTimestamp: Int!
     "Timestamp the market was most recently updated"
     blockTimestamp: Int!
     "The history of the markets borrow index return (Think S&P 500)"
@@ -74,14 +74,14 @@ type Market @entity {
 }
 
 """
-Account is an ETH address, with a list of all cToken markets the account has
+Account is an AVAX C-chain address, with a list of all jToken markets the account has
 participated in, along with liquidation information.
 """
 type Account @entity {
-    "User ETH address"
+    "User AVAX C-chain address"
     id: ID!
-    "Array of CTokens user is in"
-    tokens: [AccountCToken!]! @derivedFrom(field: "account")
+    "Array of JTokens user is in"
+    tokens: [AccountJToken!]! @derivedFrom(field: "account")
     "Count user has been liquidated"
     countLiquidated: Int!
     "Count user has liquidated others"
@@ -90,39 +90,39 @@ type Account @entity {
     hasBorrowed: Boolean!
 
     # The following values are added by the JS Wrapper, and must be calculated with the most up
-    # to date values based on the block delta for market.exchangeRate and market.borrowIndex
+    # to date values based on the timestamp delta for market.exchangeRate and market.borrowIndex
     # They do not need to be in the schema, but they will show up in the explorer playground
 
     # "If less than 1, the account can be liquidated
-    # health: BigDecimal!
+    health: BigDecimal!
     # "Total assets supplied by user"
-    # totalBorrowValueInEth: BigDecimal!
+    totalBorrowValueInUSD: BigDecimal!
     # "Total assets borrowed from user"
-    # totalCollateralValueInEth: BigDecimal!
+    totalCollateralValueInUSD: BigDecimal!
 }
 
 """
-AccountCToken is a single account within a single cToken market, with data such
+AccountJToken is a single account within a single jToken market, with data such
 as interest earned or paid
 """
-type AccountCToken @entity {
-    "Concatenation of CToken address and user address"
+type AccountJToken @entity {
+    "Concatenation of JToken address and user address"
     id: ID!
     "Relation to market"
     market: Market!
-    "Symbol of the cToken"
+    "Symbol of the jToken"
     symbol: String!
     "Relation to user"
     account: Account!
     "Transactions data"
-    transactions: [AccountCTokenTransaction!]! @derivedFrom(field:"account")
-    "Block number this asset was updated at in the contract"
-    accrualBlockNumber: BigInt!
+    transactions: [AccountJTokenTransaction!]! @derivedFrom(field:"account")
+    "Block timestamp this asset was updated at in the contract"
+    accrualBlockTimestamp: BigInt!
     "True if user is entered, false if they are exited"
     enteredMarket: Boolean!
 
-    "CToken balance of the user"
-    cTokenBalance: BigDecimal!
+    "JToken balance of the user"
+    jTokenBalance: BigDecimal!
     "Total amount of underlying supplied"
     totalUnderlyingSupplied: BigDecimal!
     "Total amount of underling redeemed"
@@ -133,15 +133,15 @@ type AccountCToken @entity {
     totalUnderlyingBorrowed: BigDecimal!
     "Total amount underlying repaid"
     totalUnderlyingRepaid: BigDecimal!
-    "Current borrow balance stored in contract (exclusive of interest since accrualBlockNumber)"
+    "Current borrow balance stored in contract (exclusive of interest since accrualBlockTimestamp)"
     storedBorrowBalance: BigDecimal!
 
     # The following values are added by the JS Wrapper, and must be calculated with the most up
-    # to date values based on the block delta for market.exchangeRate and market.borrowIndex
+    # to date values based on the timestamp delta for market.exchangeRate and market.borrowIndex
     # They do not need to be in the schema, but they will show up in the explorer playground
 
     # supplyBalanceUnderlying: BigDecimal!
-    # FORMULA: supplyBalanceUnderlying = cTokenBalance * market.exchangeRate
+    # FORMULA: supplyBalanceUnderlying = jTokenBalance * market.exchangeRate
 
     # lifetimeSupplyInterestAccrued: BigDecimal!
     # FORMULA: lifetimeSupplyInterestAccrued = supplyBalanceUnderlying - totalUnderlyingSupplied + totalUnderlyingRedeemed
@@ -154,12 +154,12 @@ type AccountCToken @entity {
 }
 
 """
-Auxiliary entity for AccountCToken
+Auxiliary entity for AccountJToken
 """
-type AccountCTokenTransaction @entity {
+type AccountJTokenTransaction @entity {
   id: ID!
 
-  account: AccountCToken!
+  account: AccountJToken!
 
   tx_hash: Bytes!
 
@@ -171,13 +171,13 @@ type AccountCTokenTransaction @entity {
 }
 
 """
-An interface for a transfer of any cToken. TransferEvent, MintEvent,
+An interface for a transfer of any jToken. TransferEvent, MintEvent,
 RedeemEvent, and LiquidationEvent all use this interface
 """
-interface CTokenTransfer {
+interface JTokenTransfer {
     "Transaction hash concatenated with log index"
     id: ID!
-    "cTokens transferred"
+    "jTokens transferred"
     amount: BigDecimal!
     "Account that received tokens"
     to: Bytes!
@@ -187,18 +187,18 @@ interface CTokenTransfer {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the cToken transferred"
-    cTokenSymbol: String!
+    "Symbol of the jToken transferred"
+    jTokenSymbol: String!
 }
 
 """
 TransferEvent will be stored for every mint, redeem, liquidation, and any normal
 transfer between two accounts.
 """
-type TransferEvent implements CTokenTransfer @entity {
+type TransferEvent implements JTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "cTokens transferred"
+    "jTokens transferred"
     amount: BigDecimal!
     "Account that received tokens"
     to: Bytes!
@@ -208,43 +208,43 @@ type TransferEvent implements CTokenTransfer @entity {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the cToken transferred"
-    cTokenSymbol: String!
+    "Symbol of the jToken transferred"
+    jTokenSymbol: String!
 }
 
 """
-MintEvent stores information for mints. From address will always be a cToken
+MintEvent stores information for mints. From address will always be a jToken
 market address
 """
-type MintEvent implements CTokenTransfer @entity {
+type MintEvent implements JTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "cTokens transferred"
+    "jTokens transferred"
     amount: BigDecimal!
     "Account that received tokens (minter)"
     to: Bytes!
-    "Account that sent tokens (CToken contract)"
+    "Account that sent tokens (JToken contract)"
     from: Bytes!
     "Block number"
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the cToken transferred"
-    cTokenSymbol: String!
+    "Symbol of the jToken transferred"
+    jTokenSymbol: String!
     "Underlying token amount transferred"
     underlyingAmount: BigDecimal
 }
 
 """
 RedeemEvent stores information for redeems. To address will always be a
-cToken market address
+jToken market address
 """
-type RedeemEvent implements CTokenTransfer @entity {
+type RedeemEvent implements JTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "cTokens transferred"
+    "jTokens transferred"
     amount: BigDecimal!
-    "Account that received tokens (CToken contract)"
+    "Account that received tokens (JToken contract)"
     to: Bytes!
     "Account that sent tokens (redeemer)"
     from: Bytes!
@@ -252,20 +252,20 @@ type RedeemEvent implements CTokenTransfer @entity {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the cToken transferred"
-    cTokenSymbol: String!
+    "Symbol of the jToken transferred"
+    jTokenSymbol: String!
     "Underlying token amount transferred"
     underlyingAmount: BigDecimal
 }
 
 """
 LiquidationEvent stores information for liquidations. The event is emitted from
-the cToken market address.
+the jToken market address.
 """
-type LiquidationEvent implements CTokenTransfer @entity {
+type LiquidationEvent implements JTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "cTokens seized"
+    "jTokens seized"
     amount: BigDecimal!
     "Liquidator receiving tokens"
     to: Bytes!
@@ -275,11 +275,11 @@ type LiquidationEvent implements CTokenTransfer @entity {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "cToken that was sezied as collateral"
-    cTokenSymbol: String!
+    "jToken that was sezied as collateral"
+    jTokenSymbol: String!
     "Symbol of the underlying asset repaid through liquidation"
     underlyingSymbol: String!
-    "Underlying cToken amount that was repaid by liquidator"
+    "Underlying jToken amount that was repaid by liquidator"
     underlyingRepayAmount: BigDecimal!
 }
 
