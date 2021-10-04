@@ -148,11 +148,17 @@ export function handleBorrow(event: Borrow): void {
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
+  jTokenStats.borrowBalanceUnderlying = jTokenStats.storedBorrowBalance
+    .times(market.borrowIndex)
+    .div(jTokenStats.accountBorrowIndex)
 
   jTokenStats.accountBorrowIndex = market.borrowIndex
   jTokenStats.totalUnderlyingBorrowed = jTokenStats.totalUnderlyingBorrowed.plus(
     borrowAmountBD,
   )
+  jTokenStats.lifetimeBorrowInterestAccrued = jTokenStats.borrowBalanceUnderlying
+    .minus(jTokenStats.totalUnderlyingBorrowed)
+    .plus(jTokenStats.totalUnderlyingRepaid)
   jTokenStats.save()
 
   let borrowID = event.transaction.hash
@@ -222,11 +228,17 @@ export function handleRepayBorrow(event: RepayBorrow): void {
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
+  jTokenStats.borrowBalanceUnderlying = jTokenStats.storedBorrowBalance
+    .times(market.borrowIndex)
+    .div(jTokenStats.accountBorrowIndex)
 
   jTokenStats.accountBorrowIndex = market.borrowIndex
   jTokenStats.totalUnderlyingRepaid = jTokenStats.totalUnderlyingRepaid.plus(
     repayAmountBD,
   )
+  jTokenStats.lifetimeBorrowInterestAccrued = jTokenStats.borrowBalanceUnderlying
+    .minus(jTokenStats.totalUnderlyingBorrowed)
+    .plus(jTokenStats.totalUnderlyingRepaid)
   jTokenStats.save()
 
   let repayID = event.transaction.hash
@@ -377,6 +389,12 @@ export function handleTransfer(event: Transfer): void {
     jTokenStatsFrom.totalUnderlyingRedeemed = jTokenStatsFrom.totalUnderlyingRedeemed.plus(
       amountUnderylingTruncated,
     )
+    jTokenStatsFrom.supplyBalanceUnderlying = jTokenStatsFrom.jTokenBalance.times(
+      market.exchangeRate,
+    )
+    jTokenStatsFrom.lifetimeSupplyInterestAccrued = jTokenStatsFrom.supplyBalanceUnderlying
+      .minus(jTokenStatsFrom.totalUnderlyingSupplied)
+      .plus(jTokenStatsFrom.totalUnderlyingRedeemed)
     jTokenStatsFrom.save()
   }
 
@@ -413,6 +431,12 @@ export function handleTransfer(event: Transfer): void {
     jTokenStatsTo.totalUnderlyingSupplied = jTokenStatsTo.totalUnderlyingSupplied.plus(
       amountUnderylingTruncated,
     )
+    jTokenStatsTo.supplyBalanceUnderlying = jTokenStatsTo.jTokenBalance.times(
+      market.exchangeRate,
+    )
+    jTokenStatsTo.lifetimeSupplyInterestAccrued = jTokenStatsTo.supplyBalanceUnderlying
+      .minus(jTokenStatsTo.totalUnderlyingSupplied)
+      .plus(jTokenStatsTo.totalUnderlyingRedeemed)
     jTokenStatsTo.save()
   }
 

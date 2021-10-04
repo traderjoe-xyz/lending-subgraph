@@ -140,16 +140,16 @@ type AccountJToken @entity {
     # to date values based on the timestamp delta for market.exchangeRate and market.borrowIndex
     # They do not need to be in the schema, but they will show up in the explorer playground
 
-    # supplyBalanceUnderlying: BigDecimal!
+    supplyBalanceUnderlying: BigDecimal!
     # FORMULA: supplyBalanceUnderlying = jTokenBalance * market.exchangeRate
 
-    # lifetimeSupplyInterestAccrued: BigDecimal!
+    lifetimeSupplyInterestAccrued: BigDecimal!
     # FORMULA: lifetimeSupplyInterestAccrued = supplyBalanceUnderlying - totalUnderlyingSupplied + totalUnderlyingRedeemed
 
-    # borrowBalanceUnderlying: BigDecimal!
+    borrowBalanceUnderlying: BigDecimal!
     # FORMULA: borrowBalanceUnderlying = storedBorrowBalance * market.borrowIndex / accountBorrowIndex
 
-    # lifetimeBorrowInterestAccrued: BigDecimal!
+    lifetimeBorrowInterestAccrued: BigDecimal!
     # FORMULA: lifetimeBorrowInterestAccrued = borrowBalanceUnderlying - totalUnderlyingBorrowed + totalUnderlyingRepaid
 }
 
