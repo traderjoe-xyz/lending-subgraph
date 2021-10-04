@@ -15,7 +15,7 @@ import { Market, Joetroller, Account } from '../types/schema'
 import { mantissaFactorBD, updateCommonJTokenStats, createAccount } from './helpers'
 import { createMarket } from './markets'
 
-let invalid_markets: string[] = ['0xbdf447b39d152d6a234b4c02772b8ab5d1783f72']
+let invalid_markets: string[] = []
 
 export function handleMarketListed(event: MarketListed): void {
   if (invalid_markets.indexOf(event.params.jToken.toHexString()) !== -1) {

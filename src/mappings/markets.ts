@@ -25,7 +25,7 @@ let jAVAXAddress: string =
 let jUSDCAddress =
   network == 'avalanche'
     ? '0x0000000000000000000000000000000000000000' // avalanche
-    : '0x791c863fe92cf0472c4dfeae375e16348971314f' // rinkeby
+    : '0xe0447d1112ece174f2b351461367f9fbf9382661' // rinkeby
 
 let blocksPerYear = '31536000'
 
@@ -55,37 +55,11 @@ function getUnderlyingPriceUSD(
   return underlyingPrice
 }
 
-// Returns the price of USDC in eth. i.e. 0.005 would mean AVAX is $200
-function getUSDCpriceAVAX(): BigDecimal {
-  let joetroller = Joetroller.load('1')
-  let oracleAddress = joetroller.priceOracle as Address
-  let usdPrice: BigDecimal
-  if (oracleAddress.toHexString() == '0x') {
-    return zeroBD
-  }
-
-  // See notes on block number if statement in getUnderlyingPriceUSDs()
-  let oracle = PriceOracle.bind(oracleAddress)
-  let mantissaDecimalFactorUSDC = 18 + 18
-  if (network == 'bsc') {
-    mantissaDecimalFactorUSDC -= 18
-  } else {
-    mantissaDecimalFactorUSDC -= 6
-  }
-  let bdFactorUSDC = exponentToBigDecimal(mantissaDecimalFactorUSDC)
-  let underlyingPrice = oracle.try_getUnderlyingPrice(Address.fromString(jUSDCAddress))
-  if (underlyingPrice.reverted) {
-    return zeroBD
-  }
-  usdPrice = underlyingPrice.value.toBigDecimal().div(bdFactorUSDC)
-  return usdPrice
-}
-
 export function createMarket(marketAddress: string): Market {
   let market: Market
   let contract = JToken.bind(Address.fromString(marketAddress))
 
-  // It is JUSDCJ, which has a slightly different interface
+  // It is JAVAX, which has a slightly different interface
   if (marketAddress == jAVAXAddress) {
     market = new Market(marketAddress)
     market.underlyingAddress = Address.fromString(
@@ -100,9 +74,9 @@ export function createMarket(marketAddress: string): Market {
       market.underlyingSymbol = 'AVAX'
     } else {
       market.underlyingName = 'Ether'
-      market.underlyingSymbol = 'AVAX'
+      market.underlyingSymbol = 'ETH'
     }
-    // It is all other CERC20 contracts
+    // It is all other JERC20 contracts
   } else {
     market = new Market(marketAddress)
     market.underlyingAddress = contract.underlying()
