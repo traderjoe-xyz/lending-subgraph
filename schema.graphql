@@ -4,13 +4,13 @@ The Joetroller type has protocol level variables stored
 type Joetroller @entity {
     "ID is set to 1"
     id: ID!
-    "Address of price oracle the joetroller uses"
+    # Address of price oracle the joetroller uses
     priceOracle: Bytes
-    "Factor used to determine repayAmount for liquidating"
+    # Factor used to determine repayAmount for liquidating
     closeFactor: BigInt
-    "The percent bonus liquidators get for liquidating"
+    # The percent bonus liquidators get for liquidating
     liquidationIncentive: BigInt
-    "Max assets a single user can enter"
+    # Max assets a single user can enter
     maxAssets: BigInt
 }
 
@@ -19,57 +19,57 @@ Market stores all high level variables for a jToken market
 """
 type Market @entity {
     #Fields that match compounds API
-    "Yearly borrow rate. With 31,536,000 secs per year"
-    borrowRate: BigDecimal!
-    "The jToken contract balance of ERC20 or AVAX"
-    cash: BigDecimal!
-    "Collateral factor determining how much one can borrow"
-    collateralFactor: BigDecimal!
-    "Exchange rate of tokens / jTokens"
-    exchangeRate:  BigDecimal!
-    "Address of the interest rate model"
-    interestRateModelAddress: Bytes!
-    "Name of the jToken"
-    name: String!
-    "Reserves stored in the contract"
-    reserves: BigDecimal!
-    "Yearly supply rate. With 31,536, 000 secs per year"
-    supplyRate: BigDecimal!
-    "JToken symbol"
-    symbol: String!
     "JToken address"
     id: ID!
-    "Borrows in the market"
+    "Yearly borrow rate. With 31,536,000 secs per year"
+    borrowRate: BigDecimal!
+    "Yearly supply rate. With 31,536, 000 secs per year"
+    supplyRate: BigDecimal!
+    # The jToken contract balance of ERC20 or AVAX
+    cash: BigDecimal!
+    # Collateral factor determining how much one can borrow
+    collateralFactor: BigDecimal!
+    # Exchange rate of tokens / jTokens
+    exchangeRate:  BigDecimal!
+    # Address of the interest rate model
+    interestRateModelAddress: Bytes!
+    # Name of the jToken
+    name: String!
+    # Reserves stored in the contract
+    reserves: BigDecimal!
+    # JToken symbol
+    symbol: String!
+    # Borrows in the market
     totalBorrows: BigDecimal!
     "JToken supply. JTokens have 8 decimals"
     totalSupply: BigDecimal!
-    "Underlying token address"
+    # Underlying token address
     underlyingAddress: Bytes!
-    "Underlying token name"
+    # Underlying token name
     underlyingName: String!
-    "Underlying price of token in USD"
+    # Underlying price of token in USD
     underlyingPrice: BigDecimal!
-    "Underlying token symbol"
+    # Underlying token symbol
     underlyingSymbol: String!
 
     # Fields that are not in compounds api
-    "Block the market is updated to"
+    # Block the market is updated to"
     accrualBlockTimestamp: Int!
-    "Timestamp the market was most recently updated"
+    # Timestamp the market was most recently updated
     blockTimestamp: Int!
-    "The history of the markets borrow index return (Think S&P 500)"
+    # The history of the markets borrow index return (Think S&P 500)
     borrowIndex: BigDecimal!
-    "The factor determining interest that goes to reserves"
+    # The factor determining interest that goes to reserves
     reserveFactor: BigInt!
-    "Underlying token price in USD"
+    # Underlying token price in USD
     underlyingPriceUSD: BigDecimal!
-    "Underlying token decimal length"
+    # Underlying token decimal length
     underlyingDecimals: Int!
 
      # Added to follow interests generation (@Amxx)
-    "Total interest produced by borrowed assets"
+    # Total interest produced by borrowed assets
     totalInterestAccumulated: BigDecimal!
-    "Total interest produced by borrowed assets (non decimal value)"
+    # Total interest produced by borrowed assets (non decimal value)
     totalInterestAccumulatedExact: BigInt!
 }
 
@@ -78,15 +78,15 @@ Account is an AVAX C-chain address, with a list of all jToken markets the accoun
 participated in, along with liquidation information.
 """
 type Account @entity {
-    "User AVAX C-chain address"
+    # User AVAX C-chain address
     id: ID!
-    "Array of JTokens user is in"
+    # Array of JTokens user is in
     tokens: [AccountJToken!]! @derivedFrom(field: "account")
-    "Count user has been liquidated"
+    # Count user has been liquidated
     countLiquidated: Int!
-    "Count user has liquidated others"
+    # Count user has liquidated others
     countLiquidator: Int!
-    "True if user has ever borrowed"
+    # True if user has ever borrowed
     hasBorrowed: Boolean!
 
     # The following values are added by the JS Wrapper, and must be calculated with the most up
@@ -95,9 +95,9 @@ type Account @entity {
 
     # "If less than 1, the account can be liquidated
     health: BigDecimal!
-    # "Total assets supplied by user"
-    totalBorrowValueInUSD: BigDecimal!
     # "Total assets borrowed from user"
+    totalBorrowValueInUSD: BigDecimal!
+    # "Total assets supplied by user"
     totalCollateralValueInUSD: BigDecimal!
 }
 
@@ -108,32 +108,32 @@ as interest earned or paid
 type AccountJToken @entity {
     "Concatenation of JToken address and user address"
     id: ID!
-    "Relation to market"
+    # Relation to market
     market: Market!
-    "Symbol of the jToken"
+    # Symbol of the jToken
     symbol: String!
-    "Relation to user"
+    # Relation to user
     account: Account!
-    "Transactions data"
+    # Transactions data
     transactions: [AccountJTokenTransaction!]! @derivedFrom(field:"account")
-    "Block timestamp this asset was updated at in the contract"
+    # Block timestamp this asset was updated at in the contract
     accrualBlockTimestamp: BigInt!
-    "True if user is entered, false if they are exited"
+    # True if user is entered, false if they are exited
     enteredMarket: Boolean!
 
-    "JToken balance of the user"
+    # JToken balance of the user
     jTokenBalance: BigDecimal!
-    "Total amount of underlying supplied"
+    # Total amount of underlying supplied
     totalUnderlyingSupplied: BigDecimal!
-    "Total amount of underling redeemed"
+    # Total amount of underling redeemed
     totalUnderlyingRedeemed: BigDecimal!
-    "The value of the borrow index upon users last interaction"
+    # The value of the borrow index upon users last interaction
     accountBorrowIndex: BigDecimal!
-    "Total amount underlying borrowed, exclusive of interest"
+    # Total amount underlying borrowed, exclusive of interest
     totalUnderlyingBorrowed: BigDecimal!
-    "Total amount underlying repaid"
+    # Total amount underlying repaid
     totalUnderlyingRepaid: BigDecimal!
-    "Current borrow balance stored in contract (exclusive of interest since accrualBlockTimestamp)"
+    # Current borrow balance stored in contract (exclusive of interest since accrualBlockTimestamp)
     storedBorrowBalance: BigDecimal!
 
     # The following values are added by the JS Wrapper, and must be calculated with the most up
@@ -175,19 +175,19 @@ An interface for a transfer of any jToken. TransferEvent, MintEvent,
 RedeemEvent, and LiquidationEvent all use this interface
 """
 interface JTokenTransfer {
-    "Transaction hash concatenated with log index"
+    # Transaction hash concatenated with log index
     id: ID!
-    "jTokens transferred"
+    # jTokens transferred
     amount: BigDecimal!
-    "Account that received tokens"
+    # Account that received tokens
     to: Bytes!
-    "Account that sent tokens"
+    # Account that sent tokens
     from: Bytes!
-    "Block number"
+    # Block number
     blockNumber: Int!
-    "Block time"
+    # Block time
     blockTime: Int!
-    "Symbol of the jToken transferred"
+    # Symbol of the jToken transferred
     jTokenSymbol: String!
 }
 
@@ -196,19 +196,19 @@ TransferEvent will be stored for every mint, redeem, liquidation, and any normal
 transfer between two accounts.
 """
 type TransferEvent implements JTokenTransfer @entity {
-    "Transaction hash concatenated with log index"
+    # Transaction hash concatenated with log index
     id: ID!
-    "jTokens transferred"
+    # jTokens transferred
     amount: BigDecimal!
-    "Account that received tokens"
+    # Account that received tokens
     to: Bytes!
-    "Account that sent tokens"
+    # Account that sent tokens
     from: Bytes!
-    "Block number"
+    # Block number
     blockNumber: Int!
-    "Block time"
+    # Block time
     blockTime: Int!
-    "Symbol of the jToken transferred"
+    # Symbol of the jToken transferred
     jTokenSymbol: String!
 }
 
@@ -217,21 +217,21 @@ MintEvent stores information for mints. From address will always be a jToken
 market address
 """
 type MintEvent implements JTokenTransfer @entity {
-    "Transaction hash concatenated with log index"
+    # Transaction hash concatenated with log index
     id: ID!
-    "jTokens transferred"
+    # jTokens transferred
     amount: BigDecimal!
-    "Account that received tokens (minter)"
+    # Account that received tokens (minter)
     to: Bytes!
-    "Account that sent tokens (JToken contract)"
+    # Account that sent tokens (JToken contract)
     from: Bytes!
-    "Block number"
+    # Block number
     blockNumber: Int!
-    "Block time"
+    # Block time
     blockTime: Int!
-    "Symbol of the jToken transferred"
+    # Symbol of the jToken transferred
     jTokenSymbol: String!
-    "Underlying token amount transferred"
+    # Underlying token amount transferred
     underlyingAmount: BigDecimal
 }
 
@@ -240,21 +240,21 @@ RedeemEvent stores information for redeems. To address will always be a
 jToken market address
 """
 type RedeemEvent implements JTokenTransfer @entity {
-    "Transaction hash concatenated with log index"
+    # Transaction hash concatenated with log index
     id: ID!
-    "jTokens transferred"
+    # jTokens transferred
     amount: BigDecimal!
-    "Account that received tokens (JToken contract)"
+    # Account that received tokens (JToken contract)
     to: Bytes!
-    "Account that sent tokens (redeemer)"
+    # Account that sent tokens (redeemer)
     from: Bytes!
-    "Block number"
+    # Block number
     blockNumber: Int!
-    "Block time"
+    # Block time
     blockTime: Int!
-    "Symbol of the jToken transferred"
+    # Symbol of the jToken transferred
     jTokenSymbol: String!
-    "Underlying token amount transferred"
+    # Underlying token amount transferred
     underlyingAmount: BigDecimal
 }
 
@@ -263,23 +263,23 @@ LiquidationEvent stores information for liquidations. The event is emitted from
 the jToken market address.
 """
 type LiquidationEvent implements JTokenTransfer @entity {
-    "Transaction hash concatenated with log index"
+    # Transaction hash concatenated with log index
     id: ID!
-    "jTokens seized"
+    # jTokens seized
     amount: BigDecimal!
-    "Liquidator receiving tokens"
+    # Liquidator receiving tokens
     to: Bytes!
-    "Account being liquidated (borrower)"
+    # Account being liquidated (borrower)
     from: Bytes!
-    "Block number"
+    # Block number
     blockNumber: Int!
-    "Block time"
+    # Block time
     blockTime: Int!
-    "jToken that was sezied as collateral"
+    # jToken that was sezied as collateral
     jTokenSymbol: String!
-    "Symbol of the underlying asset repaid through liquidation"
+    # Symbol of the underlying asset repaid through liquidation
     underlyingSymbol: String!
-    "Underlying jToken amount that was repaid by liquidator"
+    # Underlying jToken amount that was repaid by liquidator
     underlyingRepayAmount: BigDecimal!
 }
 
@@ -288,19 +288,19 @@ Underlying transfers are transfers of underlying collateral for both borrows
 and repays
 """
 interface UnderlyingTransfer {
-    "Transaction hash concatenated with log index"
+    # Transaction hash concatenated with log index
     id: ID!
-    "Amount of underlying borrowed"
+    # Amount of underlying borrowed
     amount: BigDecimal!
-    "Total borrows of this asset the account has"
+    # Total borrows of this asset the account has
     accountBorrows: BigDecimal!
-    "Account that borrowed the tokens"
+    # Account that borrowed the tokens
     borrower: Bytes!
-    "Block number"
+    # Block number
     blockNumber: Int!
-    "Block time"
+    # Block time
     blockTime: Int!
-    "Symbol of the borrowed underlying asset"
+    # Symbol of the borrowed underlying asset
     underlyingSymbol: String!
 }
 
@@ -308,19 +308,19 @@ interface UnderlyingTransfer {
 BorrowEvent stores information for borrows
 """
 type BorrowEvent implements UnderlyingTransfer @entity {
-    "Transaction hash concatenated with log index"
+    # Transaction hash concatenated with log index
     id: ID!
-    "Amount of underlying borrowed"
+    # Amount of underlying borrowed
     amount: BigDecimal!
-    "Total borrows of this asset the account has"
+    # Total borrows of this asset the account has
     accountBorrows: BigDecimal!
-    "Account that borrowed the tokens"
+    # Account that borrowed the tokens
     borrower: Bytes!
-    "Block number"
+    # Block number
     blockNumber: Int!
-    "Block time"
+    # Block time
     blockTime: Int!
-    "Symbol of the borrowed underlying asset"
+    # Symbol of the borrowed underlying asset
     underlyingSymbol: String!
 }
 
@@ -329,20 +329,20 @@ RepayEvent stores information for repays. Payer is not always the same as
 borrower, such as in the event of a Liquidation
 """
 type RepayEvent implements UnderlyingTransfer @entity {
-    "Transaction hash concatenated with log index"
+    # Transaction hash concatenated with log index
     id: ID!
-    "Amount of underlying repaid"
+    # Amount of underlying repaid
     amount: BigDecimal!
-    "Total borrows of this asset the account has"
+    # Total borrows of this asset the account has
     accountBorrows: BigDecimal!
-    "Account that borrowed the tokens"
+    # Account that borrowed the tokens
     borrower: Bytes!
-    "Block number"
+    # Block number
     blockNumber: Int!
-    "Block time"
+    # Block time
     blockTime: Int!
-    "Symbol of the borrowed underlying asset"
+    # Symbol of the borrowed underlying asset
     underlyingSymbol: String!
-    "Payer of the borrow funds"
+    # Payer of the borrow funds
     payer: Bytes!
 }
