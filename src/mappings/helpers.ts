@@ -17,6 +17,8 @@ export let jTokenDecimals = 8
 export let mantissaFactorBD: BigDecimal = exponentToBigDecimal(18)
 export let jTokenDecimalsBD: BigDecimal = exponentToBigDecimal(8)
 export let zeroBD = BigDecimal.fromString('0')
+export let oneBD = BigDecimal.fromString('1')
+export let hundredBD = BigDecimal.fromString('100')
 
 export function createAccountJToken(
   jTokenStatsID: string,
@@ -32,11 +34,15 @@ export function createAccountJToken(
   jTokenStats.jTokenBalance = zeroBD
   jTokenStats.totalUnderlyingSupplied = zeroBD
   jTokenStats.totalUnderlyingRedeemed = zeroBD
-  jTokenStats.accountBorrowIndex = zeroBD
+  jTokenStats.accountBorrowIndex = oneBD
   jTokenStats.totalUnderlyingBorrowed = zeroBD
   jTokenStats.totalUnderlyingRepaid = zeroBD
   jTokenStats.storedBorrowBalance = zeroBD
   jTokenStats.enteredMarket = false
+  jTokenStats.supplyBalanceUnderlying = zeroBD
+  jTokenStats.lifetimeSupplyInterestAccrued = zeroBD
+  jTokenStats.borrowBalanceUnderlying = zeroBD
+  jTokenStats.lifetimeBorrowInterestAccrued = zeroBD
   return jTokenStats
 }
 

@@ -28,6 +28,8 @@ import {
   exponentToBigDecimal,
   jTokenDecimalsBD,
   jTokenDecimals,
+  zeroBD,
+  hundredBD,
 } from './helpers'
 
 /* Account supplies assets into market and receives jTokens in exchange
@@ -49,6 +51,19 @@ export function handleMint(event: Mint): void {
     .toHexString()
     .concat('-')
     .concat(event.transactionLogIndex.toString())
+  let accountID = event.params.minter.toHex()
+
+  // Update jTokenStats common for all events, and return the stats to update unique
+  // values for each event
+  let jTokenStats = updateCommonJTokenStats(
+    market.id,
+    market.symbol,
+    accountID,
+    event.transaction.hash,
+    event.block.timestamp,
+    event.block.number,
+    event.logIndex,
+  )
 
   let jTokenAmount = event.params.mintTokens
     .toBigDecimal()
@@ -58,6 +73,23 @@ export function handleMint(event: Mint): void {
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
+
+  // If user has entered market, then we register as collateral
+  if (jTokenStats.enteredMarket) {
+    let underlyingAmountUSD = underlyingAmount.times(market.underlyingPriceUSD)
+    let collateralValueUSD = underlyingAmountUSD.times(market.collateralFactor)
+    let account = Account.load(accountID)
+    if (account == null) {
+      account = createAccount(accountID)
+    }
+    account.totalCollateralValueInUSD = account.totalCollateralValueInUSD.plus(
+      collateralValueUSD,
+    )
+    account.health = account.totalBorrowValueInUSD.gt(zeroBD)
+      ? account.totalCollateralValueInUSD.div(account.totalBorrowValueInUSD)
+      : hundredBD
+    account.save()
+  }
 
   let mint = new MintEvent(mintID)
   mint.amount = jTokenAmount
@@ -88,6 +120,19 @@ export function handleRedeem(event: Redeem): void {
     .toHexString()
     .concat('-')
     .concat(event.transactionLogIndex.toString())
+  let accountID = event.params.redeemer.toHex()
+
+  // Update jTokenStats common for all events, and return the stats to update unique
+  // values for each event
+  let jTokenStats = updateCommonJTokenStats(
+    market.id,
+    market.symbol,
+    accountID,
+    event.transaction.hash,
+    event.block.timestamp,
+    event.block.number,
+    event.logIndex,
+  )
 
   let jTokenAmount = event.params.redeemTokens
     .toBigDecimal()
@@ -97,6 +142,25 @@ export function handleRedeem(event: Redeem): void {
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
+
+  // If user has entered market, then we subtract collateral value
+  if (jTokenStats.enteredMarket) {
+    let underlyingAmountUSD = underlyingAmount.times(market.underlyingPriceUSD)
+    let collateralValueUSD = underlyingAmountUSD.times(market.collateralFactor)
+    let account = Account.load(accountID)
+    if (account == null) {
+      account = createAccount(accountID)
+    }
+    account.totalCollateralValueInUSD = account.totalCollateralValueInUSD.minus(
+      collateralValueUSD,
+    )
+    account.health = account.totalCollateralValueInUSD.equals(zeroBD)
+      ? zeroBD
+      : account.totalBorrowValueInUSD.gt(zeroBD)
+      ? account.totalCollateralValueInUSD.div(account.totalBorrowValueInUSD)
+      : hundredBD
+    account.save()
+  }
 
   let redeem = new RedeemEvent(redeemID)
   redeem.amount = jTokenAmount
@@ -126,7 +190,6 @@ export function handleBorrow(event: Borrow): void {
     account = createAccount(accountID)
   }
   account.hasBorrowed = true
-  account.save()
 
   // Update jTokenStats common for all events, and return the stats to update unique
   // values for each event
@@ -143,6 +206,12 @@ export function handleBorrow(event: Borrow): void {
   let borrowAmountBD = event.params.borrowAmount
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
+  let borrowAmountUSD = borrowAmountBD.times(market.underlyingPriceUSD)
+  account.totalBorrowValueInUSD = account.totalBorrowValueInUSD.plus(borrowAmountUSD)
+  account.health = account.totalBorrowValueInUSD.gt(zeroBD)
+    ? account.totalCollateralValueInUSD.div(account.totalBorrowValueInUSD)
+    : hundredBD
+  account.save()
 
   jTokenStats.storedBorrowBalance = event.params.accountBorrows
     .toBigDecimal()
@@ -223,6 +292,9 @@ export function handleRepayBorrow(event: RepayBorrow): void {
   let repayAmountBD = event.params.repayAmount
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
+  let repayAmountUSD = repayAmountBD.times(market.underlyingPriceUSD)
+  account.totalBorrowValueInUSD = account.totalBorrowValueInUSD.minus(repayAmountUSD)
+  account.save()
 
   jTokenStats.storedBorrowBalance = event.params.accountBorrows
     .toBigDecimal()

@@ -12,6 +12,7 @@ import {
   mantissaFactor,
   mantissaFactorBD,
   jTokenDecimalsBD,
+  oneBD,
   zeroBD,
 } from './helpers'
 
@@ -113,7 +114,7 @@ export function createMarket(marketAddress: string): Market {
 
   market.accrualBlockTimestamp = 0
   market.blockTimestamp = 0
-  market.borrowIndex = zeroBD
+  market.borrowIndex = oneBD
   market.reserveFactor = reserveFactor.reverted ? BigInt.fromI32(0) : reserveFactor.value
 
   return market
