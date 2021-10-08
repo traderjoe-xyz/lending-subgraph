@@ -3,12 +3,12 @@ import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 
 export function updateMarketDayDataMint(event: Mint): MarketDayData {
   let marketDayData = setupMarketDayData(event)
-
+  
   const mintBlock = event.params.mintMantissa
 
   marketDayData.txCount = marketDayData.txCount.plus(BigInt.fromI32(1))
   marketDayData.totalSupply = marketDayData.totalSupply.plus(mintBlock.amount)  
-  marketDayData.totalSupplyUSD = marketDayData.totalSupplyUSD.plus(mintBlock.underlyingAmount)  
+  marketDayData.totalSupplyUSD = marketDayData.totalSupplyUSD.plus(mintBlock.underlyingAmount.multipliedBy(marketDayData.market.underlyingPriceUSD))  
 
   marketDayData.save()
 
@@ -22,7 +22,7 @@ export function updateMarketDayDataRedeem(event: Redeem): MarketDayData {
 
   marketDayData.txCount = marketDayData.txCount.plus(BigInt.fromI32(1))
   marketDayData.totalSupply = marketDayData.totalSupply.minus(redeemBlock.amount)  
-  marketDayData.totalSupplyUSD = marketDayData.totalSupplyUSD.minus(redeemBlock.underlyingAmount)  
+  marketDayData.totalSupplyUSD = marketDayData.totalSupplyUSD.minus(redeemBlock.underlyingAmount.multipliedBy(marketDayData.market.underlyingPriceUSD))  
 
   marketDayData.save()
 
@@ -36,7 +36,7 @@ export function updateMarketDayDataBorrow(event: Borrow): MarketDayData {
 
   marketDayData.txCount = marketDayData.txCount.plus(BigInt.fromI32(1))
   marketDayData.totalBorrow = marketDayData.totalBorrow.plus(borrowBlock.amount)  
-  marketDayData.totalBorrowUSD = marketDayData.totalBorrowUSD.plus(borrowBlock.underlyingAmount)  
+  marketDayData.totalBorrowUSD = marketDayData.totalBorrowUSD.plus(borrowBlock.underlyingAmount.multipliedBy(marketDayData.market.underlyingPriceUSD))  
 
   marketDayData.save()
 
@@ -50,7 +50,7 @@ export function updateMarketDayDataRepay(event: Repay): MarketDayData {
 
   marketDayData.txCount = marketDayData.txCount.plus(BigInt.fromI32(1))
   marketDayData.totalBorrow = marketDayData.totalBorrow.minus(repayBlock.amount)  
-  marketDayData.totalBorrowUSD = marketDayData.totalBorrowUSD.minus(repayBlock.underlyingAmount)  
+  marketDayData.totalBorrowUSD = marketDayData.totalBorrowUSD.minus(repayBlock.underlyingAmount.multipliedBy(marketDayData.market.underlyingPriceUSD))  
 
   marketDayData.save()
 
