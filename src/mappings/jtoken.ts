@@ -31,6 +31,7 @@ import {
   zeroBD,
   hundredBD,
 } from './helpers'
+import { updateMarketDayDataMint, updateMarketDayDataBorrow, updateMarketDayDataRedeem, updateMarketDayDataRepay } from '../entities/market-day-data'
 
 /* Account supplies assets into market and receives jTokens in exchange
  *
@@ -64,6 +65,8 @@ export function handleMint(event: Mint): void {
     event.block.number,
     event.logIndex,
   )
+  
+  updateMarketDayDataMint(event)
 
   let jTokenAmount = event.params.mintTokens
     .toBigDecimal()
@@ -134,6 +137,8 @@ export function handleRedeem(event: Redeem): void {
     event.logIndex,
   )
 
+  updateMarketDayDataRedeem(event)
+
   let jTokenAmount = event.params.redeemTokens
     .toBigDecimal()
     .div(jTokenDecimalsBD)
@@ -202,6 +207,8 @@ export function handleBorrow(event: Borrow): void {
     event.block.number,
     event.logIndex,
   )
+
+  updateMarketDayDataBorrow(event)
 
   let borrowAmountBD = event.params.borrowAmount
     .toBigDecimal()
@@ -288,6 +295,8 @@ export function handleRepayBorrow(event: RepayBorrow): void {
     event.block.number,
     event.logIndex,
   )
+
+  updateMarketDayDataRepay(event)
 
   let repayAmountBD = event.params.repayAmount
     .toBigDecimal()
