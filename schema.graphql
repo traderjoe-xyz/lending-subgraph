@@ -280,7 +280,7 @@ type LiquidationEvent implements JTokenTransfer @entity {
     # Underlying jToken amount that was repaid by liquidator
     underlyingRepayAmount: BigDecimal!
     # Day data
-    dayData: LiquidationEventDayData!
+    dayData: LiquidationDayData!
 }
 
 """
