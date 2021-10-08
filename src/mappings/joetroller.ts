@@ -14,6 +14,7 @@ import { JToken } from '../types/templates'
 import { Market, Joetroller, Account } from '../types/schema'
 import { mantissaFactorBD, updateCommonJTokenStats, createAccount } from './helpers'
 import { createMarket } from './markets'
+import { updateLiquidationDayData } from '../entities/liquidation-day-data'
 
 let invalid_markets: string[] = []
 
@@ -107,6 +108,9 @@ export function handleNewCollateralFactor(event: NewCollateralFactor): void {
 export function handleNewLiquidationIncentive(event: NewLiquidationIncentive): void {
   let joetroller = Joetroller.load('1')
   joetroller.liquidationIncentive = event.params.newLiquidationIncentiveMantissa
+
+  updateLiquidationDayData(event)
+
   joetroller.save()
 }
 
