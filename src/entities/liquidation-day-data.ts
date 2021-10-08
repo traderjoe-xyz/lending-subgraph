@@ -1,4 +1,4 @@
-import { LiquidationDayData } from '../../schema'
+import { LiquidationDayData, Market } from '../../schema'
 import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 
 export function updateLiquidationDayData(event: LiquidationBorrow): LiquidationDayData {
@@ -8,6 +8,7 @@ export function updateLiquidationDayData(event: LiquidationBorrow): LiquidationD
 
   const id = event.address.toHex().concat('-').concat(BigInt.fromI32(day).toString())
 
+  const market = Market.load(event.address.toHex())
   let liquidationDayData = LiquidationDayData.load(id)
   const liquidationBlock = event.params.liquidationBorrowMantissa
 
@@ -23,7 +24,7 @@ export function updateLiquidationDayData(event: LiquidationBorrow): LiquidationD
     liquidationDayData.liquidationEvents = []
   }
 
-  const liquidationBlockAmountUSD = liquidationBlock.amount.multipliedBy(liquidationDayData.underlyingRepayAmount)
+  const liquidationBlockAmountUSD = liquidationBlock.underlyingRepayAmount.multipliedBy(market.underlyingPriceUSD)
 
   liquidationDayData.amount = liquidationDayData.amount.plus(liquidationBlock.amount)
   liquidationDayData.amountUSD = liquidationDayData.amountUSD.plus(liquidationBlockAmountUSD)

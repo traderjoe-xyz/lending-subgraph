@@ -110,14 +110,11 @@ export function handleNewLiquidationIncentive(event: NewLiquidationIncentive): v
   let joetroller = Joetroller.load('1')
   joetroller.liquidationIncentive = event.params.newLiquidationIncentiveMantissa
 
-  updateLiquidationDayData(event)
-
   joetroller.save()
 }
 
 export function handleLiquidateBorrow(event: LiquidationBorrow): void {
   let joetroller = Joetroller.load('1')
-
   joetroller.liquidationBorrow = event.params.LiquidationBorrowMantissa
 
   updateLiquidationDayData(event)
