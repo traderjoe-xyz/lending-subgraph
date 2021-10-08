@@ -281,6 +281,27 @@ type LiquidationEvent implements JTokenTransfer @entity {
     underlyingSymbol: String!
     # Underlying jToken amount that was repaid by liquidator
     underlyingRepayAmount: BigDecimal!
+    # Day data
+    dayData: [LiquidationEventDayData!]! @derivedFrom(field: "liquidationEvent")
+
+}
+
+"""
+LiquidationEventDayData stores information for liquidations by day
+"""
+type LiquidationEventDayData @entity {
+    # day start timestamp
+    id: ID!
+    # day start timestamp
+    date: Int!
+    # jTokens seized
+    amount: BigDecimal!
+    # jToken that was seized as collateral
+    jTokenSymbol: String!
+    # Symbol of the underlying asset repaid through liquidation
+    underlyingSymbol: String!
+    # Underlying jToken amount that was repaid by liquidator
+    underlyingRepayAmount: BigDecimal!
 }
 
 """
@@ -345,4 +366,28 @@ type RepayEvent implements UnderlyingTransfer @entity {
     underlyingSymbol: String!
     # Payer of the borrow funds
     payer: Bytes!
+}
+
+# Day Data
+type DayData @entity {
+  # timestamp / 86400
+  id: ID!
+
+  # date
+  date: Int!
+
+  # factory
+  factory: Factory!
+
+  # volume
+  volumeAVAX: BigDecimal!
+  volumeUSD: BigDecimal!
+  untrackedVolume: BigDecimal!
+
+  # liquidity
+  liquidityAVAX: BigDecimal!
+  liquidityUSD: BigDecimal!
+
+  # tx count
+  txCount: BigInt!
 }
