@@ -8,6 +8,7 @@ import {
   NewLiquidationIncentive,
   NewPriceOracle,
   MarketListed,
+  LiquidationBorrow
 } from '../types/Joetroller/Joetroller'
 
 import { JToken } from '../types/templates'
@@ -108,6 +109,16 @@ export function handleNewCollateralFactor(event: NewCollateralFactor): void {
 export function handleNewLiquidationIncentive(event: NewLiquidationIncentive): void {
   let joetroller = Joetroller.load('1')
   joetroller.liquidationIncentive = event.params.newLiquidationIncentiveMantissa
+
+  updateLiquidationDayData(event)
+
+  joetroller.save()
+}
+
+export function handleLiquidateBorrow(event: LiquidationBorrow): void {
+  let joetroller = Joetroller.load('1')
+
+  joetroller.liquidationBorrow = event.params.LiquidationBorrowMantissa
 
   updateLiquidationDayData(event)
 

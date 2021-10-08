@@ -1,7 +1,7 @@
-import { LiquidationDayData, LiquidationEvent, Market } from '../../schema'
+import { LiquidationDayData } from '../../schema'
 import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 
-export function updateLiquidationDayData(event: NewLiquidationIncentive): LiquidationDayData {
+export function updateLiquidationDayData(event: LiquidationBorrow): LiquidationDayData {
   const timestamp = event.block.timestamp.toI32()
 
   const day = timestamp / 86400
@@ -9,26 +9,27 @@ export function updateLiquidationDayData(event: NewLiquidationIncentive): Liquid
   const id = event.address.toHex().concat('-').concat(BigInt.fromI32(day).toString())
 
   let liquidationDayData = LiquidationDayData.load(id)
-  let market = Market.load(event.address.toHex())
-
-  //need to get the actual liquidation block here
-  const liquidationEvent = LiquidationEvent.load(event.address.toHex())
+  const liquidationBlock = event.params.liquidationBorrowMantissa
 
   if (liquidationDayData === null) {
     liquidationDayData = new liquidationDayData(id)
     liquidationDayData.date = day * 86400
     liquidationDayData.amount = BigDecimal.fromString('0')
-    liquidationDayData.txCount = BigDecimal.fromString('0')
-    liquidationDayData.jTokenSymbol =  market.symbol
-    liquidationDayData.underlyingSymbol = market.underlyingSymbol
+    liquidationDayData.amountUSD = BigDecimal.fromString('0')
+    liquidationDayData.txCount = BigInt.fromI32(0)
+    liquidationDayData.jTokenSymbol =  liquidationBlock.jTokenSymbol
+    liquidationDayData.underlyingSymbol = liquidationBlock.underlyingSymbol
     liquidationDayData.underlyingRepayAmount = BigDecimal.fromString('0')
     liquidationDayData.liquidationEvents = []
   }
 
-  liquidationDayData.amount = liquidationDayData.amount.plus(liquidationEvent.amount)
-  liquidationDayData.txCount = liquidationDayData.txCount.plus(BigInt.fromI32(1))
-  liquidationDayData.underlyingRepayAmount =  liquidationDayData.underlyingRepayAmount.plus(liquidationEvent.underlyingRepayAmount)  
+  const liquidationBlockAmountUSD = liquidationBlock.amount.multipliedBy(liquidationDayData.underlyingRepayAmount)
 
+  liquidationDayData.amount = liquidationDayData.amount.plus(liquidationBlock.amount)
+  liquidationDayData.amountUSD = liquidationDayData.amountUSD.plus(liquidationBlockAmountUSD)
+  liquidationDayData.txCount = liquidationDayData.txCount.plus(BigInt.fromI32(1))
+  liquidationDayData.underlyingRepayAmount = liquidationDayData.underlyingRepayAmount.plus(liquidationBlock.underlyingRepayAmount)  
+  liquidationDayData.liquidationEvents.push(liquidationBlock)
   liquidationDayData.save()
 
   return liquidationDayData as LiquidationDayData
