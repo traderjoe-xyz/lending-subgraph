@@ -47,8 +47,6 @@ type Market @entity {
     underlyingAddress: Bytes!
     # Underlying token name
     underlyingName: String!
-    # Underlying price of token in USD
-    underlyingPrice: BigDecimal!
     # Underlying token symbol
     underlyingSymbol: String!
 
