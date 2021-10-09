@@ -1,4 +1,5 @@
 /* eslint-disable prefer-const */ // to satisfy AS compiler
+import { Address, dataSource } from '@graphprotocol/graph-ts'
 import {
   Mint,
   Redeem,
@@ -10,6 +11,7 @@ import {
   NewReserveFactor,
   NewMarketInterestRateModel,
 } from '../types/templates/JToken/JToken'
+import { JoeLens } from '../types/Joetroller/JoeLens'
 import {
   Market,
   Account,
@@ -28,9 +30,19 @@ import {
   exponentToBigDecimal,
   jTokenDecimalsBD,
   jTokenDecimals,
-  zeroBD,
-  hundredBD,
+  mantissaFactorBD,
+  mantissaFactor,
 } from './helpers'
+
+let network = dataSource.network()
+const JOETROLLER_ADDRESS: string =
+  network === 'avalanche'
+    ? '0x0000000000000000000000000000000000000000' // avalanche
+    : '0x5b0a2fa14808e34c5518e19f0dbc39f61d080b11' // rinkeby
+const JOELENS_ADDRESS: string =
+  network === 'avalanche'
+    ? '0x0000000000000000000000000000000000000000'
+    : '0x4f101798dd4af8a2a8325f4c54c195a61c59dc62'
 
 /* Account supplies assets into market and receives jTokens in exchange
  *
@@ -73,23 +85,6 @@ export function handleMint(event: Mint): void {
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
-
-  // If user has entered market, then we register as collateral
-  if (jTokenStats.enteredMarket) {
-    let underlyingAmountUSD = underlyingAmount.times(market.underlyingPriceUSD)
-    let collateralValueUSD = underlyingAmountUSD.times(market.collateralFactor)
-    let account = Account.load(accountID)
-    if (account == null) {
-      account = createAccount(accountID)
-    }
-    account.totalCollateralValueInUSD = account.totalCollateralValueInUSD.plus(
-      collateralValueUSD,
-    )
-    account.health = account.totalBorrowValueInUSD.gt(zeroBD)
-      ? account.totalCollateralValueInUSD.div(account.totalBorrowValueInUSD)
-      : hundredBD
-    account.save()
-  }
 
   let mint = new MintEvent(mintID)
   mint.amount = jTokenAmount
@@ -143,25 +138,6 @@ export function handleRedeem(event: Redeem): void {
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
 
-  // If user has entered market, then we subtract collateral value
-  if (jTokenStats.enteredMarket) {
-    let underlyingAmountUSD = underlyingAmount.times(market.underlyingPriceUSD)
-    let collateralValueUSD = underlyingAmountUSD.times(market.collateralFactor)
-    let account = Account.load(accountID)
-    if (account == null) {
-      account = createAccount(accountID)
-    }
-    account.totalCollateralValueInUSD = account.totalCollateralValueInUSD.minus(
-      collateralValueUSD,
-    )
-    account.health = account.totalCollateralValueInUSD.equals(zeroBD)
-      ? zeroBD
-      : account.totalBorrowValueInUSD.gt(zeroBD)
-      ? account.totalCollateralValueInUSD.div(account.totalBorrowValueInUSD)
-      : hundredBD
-    account.save()
-  }
-
   let redeem = new RedeemEvent(redeemID)
   redeem.amount = jTokenAmount
   redeem.to = event.address
@@ -206,12 +182,6 @@ export function handleBorrow(event: Borrow): void {
   let borrowAmountBD = event.params.borrowAmount
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
-  let borrowAmountUSD = borrowAmountBD.times(market.underlyingPriceUSD)
-  account.totalBorrowValueInUSD = account.totalBorrowValueInUSD.plus(borrowAmountUSD)
-  account.health = account.totalBorrowValueInUSD.gt(zeroBD)
-    ? account.totalCollateralValueInUSD.div(account.totalBorrowValueInUSD)
-    : hundredBD
-  account.save()
 
   jTokenStats.storedBorrowBalance = event.params.accountBorrows
     .toBigDecimal()
@@ -229,6 +199,27 @@ export function handleBorrow(event: Borrow): void {
     .minus(jTokenStats.totalUnderlyingBorrowed)
     .plus(jTokenStats.totalUnderlyingRepaid)
   jTokenStats.save()
+
+  const joeLensContract = JoeLens.bind(Address.fromString(JOELENS_ADDRESS))
+  const accountLimitInfoResult = joeLensContract.try_getAccountLimits(
+    Address.fromString(JOETROLLER_ADDRESS),
+    Address.fromString(accountID),
+  )
+  if (!accountLimitInfoResult.reverted) {
+    account.totalCollateralValueInUSD = accountLimitInfoResult.value.totalCollateralValueUSD
+      .toBigDecimal()
+      .div(mantissaFactorBD)
+      .truncate(mantissaFactor)
+    account.totalBorrowValueInUSD = accountLimitInfoResult.value.totalBorrowValueUSD
+      .toBigDecimal()
+      .div(mantissaFactorBD)
+      .truncate(mantissaFactor)
+    account.health = accountLimitInfoResult.value.healthFactor
+      .toBigDecimal()
+      .div(mantissaFactorBD)
+      .truncate(mantissaFactor)
+    account.save()
+  }
 
   let borrowID = event.transaction.hash
     .toHexString()
@@ -274,7 +265,7 @@ export function handleRepayBorrow(event: RepayBorrow): void {
   let accountID = event.params.borrower.toHex()
   let account = Account.load(accountID)
   if (account == null) {
-    createAccount(accountID)
+    account = createAccount(accountID)
   }
 
   // Update jTokenStats common for all events, and return the stats to update unique
@@ -293,8 +284,6 @@ export function handleRepayBorrow(event: RepayBorrow): void {
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
   let repayAmountUSD = repayAmountBD.times(market.underlyingPriceUSD)
-  account.totalBorrowValueInUSD = account.totalBorrowValueInUSD.minus(repayAmountUSD)
-  account.save()
 
   jTokenStats.storedBorrowBalance = event.params.accountBorrows
     .toBigDecimal()
@@ -303,6 +292,27 @@ export function handleRepayBorrow(event: RepayBorrow): void {
   jTokenStats.borrowBalanceUnderlying = jTokenStats.storedBorrowBalance
     .times(market.borrowIndex)
     .div(jTokenStats.accountBorrowIndex)
+
+  const joeLensContract = JoeLens.bind(Address.fromString(JOELENS_ADDRESS))
+  const accountLimitInfoResult = joeLensContract.try_getAccountLimits(
+    Address.fromString(JOETROLLER_ADDRESS),
+    Address.fromString(accountID),
+  )
+  if (!accountLimitInfoResult.reverted) {
+    account.totalCollateralValueInUSD = accountLimitInfoResult.value.totalCollateralValueUSD
+      .toBigDecimal()
+      .div(mantissaFactorBD)
+      .truncate(mantissaFactor)
+    account.totalBorrowValueInUSD = accountLimitInfoResult.value.totalBorrowValueUSD
+      .toBigDecimal()
+      .div(mantissaFactorBD)
+      .truncate(mantissaFactor)
+    account.health = accountLimitInfoResult.value.healthFactor
+      .toBigDecimal()
+      .div(mantissaFactorBD)
+      .truncate(mantissaFactor)
+    account.save()
+  }
 
   jTokenStats.accountBorrowIndex = market.borrowIndex
   jTokenStats.totalUnderlyingRepaid = jTokenStats.totalUnderlyingRepaid.plus(
@@ -436,7 +446,7 @@ export function handleTransfer(event: Transfer): void {
   if (accountFromID != marketID) {
     let accountFrom = Account.load(accountFromID)
     if (accountFrom == null) {
-      createAccount(accountFromID)
+      accountFrom = createAccount(accountFromID)
     }
 
     // Update jTokenStats common for all events, and return the stats to update unique
@@ -451,13 +461,6 @@ export function handleTransfer(event: Transfer): void {
       event.logIndex,
     )
 
-    jTokenStatsFrom.jTokenBalance = jTokenStatsFrom.jTokenBalance.minus(
-      event.params.amount
-        .toBigDecimal()
-        .div(jTokenDecimalsBD)
-        .truncate(jTokenDecimals),
-    )
-
     jTokenStatsFrom.totalUnderlyingRedeemed = jTokenStatsFrom.totalUnderlyingRedeemed.plus(
       amountUnderylingTruncated,
     )
@@ -468,6 +471,27 @@ export function handleTransfer(event: Transfer): void {
       .minus(jTokenStatsFrom.totalUnderlyingSupplied)
       .plus(jTokenStatsFrom.totalUnderlyingRedeemed)
     jTokenStatsFrom.save()
+
+    const joeLensContract = JoeLens.bind(Address.fromString(JOELENS_ADDRESS))
+    const accountLimitInfoResult = joeLensContract.try_getAccountLimits(
+      Address.fromString(JOETROLLER_ADDRESS),
+      Address.fromString(accountFromID),
+    )
+    if (!accountLimitInfoResult.reverted) {
+      accountFrom.totalCollateralValueInUSD = accountLimitInfoResult.value.totalCollateralValueUSD
+        .toBigDecimal()
+        .div(mantissaFactorBD)
+        .truncate(mantissaFactor)
+      accountFrom.totalBorrowValueInUSD = accountLimitInfoResult.value.totalBorrowValueUSD
+        .toBigDecimal()
+        .div(mantissaFactorBD)
+        .truncate(mantissaFactor)
+      accountFrom.health = accountLimitInfoResult.value.healthFactor
+        .toBigDecimal()
+        .div(mantissaFactorBD)
+        .truncate(mantissaFactor)
+      accountFrom.save()
+    }
   }
 
   // Checking if the tx is TO the jToken contract (i.e. this will not run when redeeming)
@@ -478,7 +502,7 @@ export function handleTransfer(event: Transfer): void {
   if (accountToID != marketID) {
     let accountTo = Account.load(accountToID)
     if (accountTo == null) {
-      createAccount(accountToID)
+      accountTo = createAccount(accountToID)
     }
 
     // Update jTokenStats common for all events, and return the stats to update unique
@@ -493,13 +517,6 @@ export function handleTransfer(event: Transfer): void {
       event.logIndex,
     )
 
-    jTokenStatsTo.jTokenBalance = jTokenStatsTo.jTokenBalance.plus(
-      event.params.amount
-        .toBigDecimal()
-        .div(jTokenDecimalsBD)
-        .truncate(jTokenDecimals),
-    )
-
     jTokenStatsTo.totalUnderlyingSupplied = jTokenStatsTo.totalUnderlyingSupplied.plus(
       amountUnderylingTruncated,
     )
@@ -510,6 +527,27 @@ export function handleTransfer(event: Transfer): void {
       .minus(jTokenStatsTo.totalUnderlyingSupplied)
       .plus(jTokenStatsTo.totalUnderlyingRedeemed)
     jTokenStatsTo.save()
+
+    const joeLensContract = JoeLens.bind(Address.fromString(JOELENS_ADDRESS))
+    const accountLimitInfoResult = joeLensContract.try_getAccountLimits(
+      Address.fromString(JOETROLLER_ADDRESS),
+      Address.fromString(accountToID),
+    )
+    if (!accountLimitInfoResult.reverted) {
+      accountTo.totalCollateralValueInUSD = accountLimitInfoResult.value.totalCollateralValueUSD
+        .toBigDecimal()
+        .div(mantissaFactorBD)
+        .truncate(mantissaFactor)
+      accountTo.totalBorrowValueInUSD = accountLimitInfoResult.value.totalBorrowValueUSD
+        .toBigDecimal()
+        .div(mantissaFactorBD)
+        .truncate(mantissaFactor)
+      accountTo.health = accountLimitInfoResult.value.healthFactor
+        .toBigDecimal()
+        .div(mantissaFactorBD)
+        .truncate(mantissaFactor)
+      accountTo.save()
+    }
   }
 
   let transferID = event.transaction.hash
