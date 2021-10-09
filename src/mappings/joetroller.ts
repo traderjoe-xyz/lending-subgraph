@@ -107,7 +107,6 @@ export function handleNewCollateralFactor(event: NewCollateralFactor): void {
 export function handleNewLiquidationIncentive(event: NewLiquidationIncentive): void {
   let joetroller = Joetroller.load('1')
   joetroller.liquidationIncentive = event.params.newLiquidationIncentiveMantissa
-
   joetroller.save()
 }
 
