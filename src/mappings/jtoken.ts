@@ -461,6 +461,13 @@ export function handleTransfer(event: Transfer): void {
       event.logIndex,
     )
 
+    jTokenStatsFrom.jTokenBalance = jTokenStatsFrom.jTokenBalance.minus(
+      event.params.amount
+        .toBigDecimal()
+        .div(jTokenDecimalsBD)
+        .truncate(jTokenDecimals),
+    )
+
     jTokenStatsFrom.totalUnderlyingRedeemed = jTokenStatsFrom.totalUnderlyingRedeemed.plus(
       amountUnderylingTruncated,
     )
