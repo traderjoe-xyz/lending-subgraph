@@ -1,11 +1,20 @@
 /* eslint-disable prefer-const */ // to satisfy AS compiler
 
 // For each division by 10, add one to exponent to truncate one significant figure
-import { Address, BigDecimal, BigInt, log, dataSource } from '@graphprotocol/graph-ts'
+import {
+  Address,
+  BigDecimal,
+  BigInt,
+  dataSource,
+  ethereum,
+  log,
+} from '@graphprotocol/graph-ts'
 import { Market, Joetroller } from '../types/schema'
 import { PriceOracle } from '../types/templates/JToken/PriceOracle'
 import { ERC20 } from '../types/templates/JToken/ERC20'
 import { AccrueInterest, JToken } from '../types/templates/JToken/JToken'
+import { JCollateralCapErc20 } from '../types/templates/JToken/JCollateralCapErc20'
+import { JWrappedNative } from '../types/templates/JToken/JWrappedNative'
 
 import {
   exponentToBigDecimal,
@@ -28,9 +37,9 @@ let jUSDCAddress =
     ? '0x0000000000000000000000000000000000000000' // avalanche
     : '0xe0447d1112ece174f2b351461367f9fbf9382661' // rinkeby
 
-let blocksPerYear = '31536000'
+let secondsPerYear = '31536000'
 
-let blocksPerTenMin = 600
+let secondsPerTenMin = 60
 
 // Used for all jERC20 contracts
 function getUnderlyingPriceUSD(
@@ -58,16 +67,16 @@ function getUnderlyingPriceUSD(
 
 export function createMarket(marketAddress: string): Market {
   let market: Market
-  let contract = JToken.bind(Address.fromString(marketAddress))
 
   // It is JAVAX, which has a slightly different interface
-  if (marketAddress == jAVAXAddress) {
+  if (
+    marketAddress == jAVAXAddress ||
+    marketAddress == '0x0444dcf838055493519f26021de63afa72eee0d2'
+  ) {
+    let contract = JWrappedNative.bind(Address.fromString(marketAddress))
     market = new Market(marketAddress)
-    market.underlyingAddress = Address.fromString(
-      '0x0000000000000000000000000000000000000000',
-    )
+    market.underlyingAddress = contract.underlying()
     market.underlyingDecimals = 18
-    market.underlyingPrice = zeroBD
     market.underlyingPriceUSD = zeroBD
 
     if (network == 'avalanche') {
@@ -79,6 +88,7 @@ export function createMarket(marketAddress: string): Market {
     }
     // It is all other JERC20 contracts
   } else {
+    let contract = JCollateralCapErc20.bind(Address.fromString(marketAddress))
     market = new Market(marketAddress)
     market.underlyingAddress = contract.underlying()
     let underlyingContract = ERC20.bind(market.underlyingAddress as Address)
@@ -86,12 +96,12 @@ export function createMarket(marketAddress: string): Market {
     market.underlyingName = underlyingContract.name()
     market.underlyingSymbol = underlyingContract.symbol()
     market.underlyingPriceUSD = zeroBD
-    market.underlyingPrice = zeroBD
     if (marketAddress == jUSDCAddress) {
       market.underlyingPriceUSD = BigDecimal.fromString('1')
     }
   }
 
+  let contract = JToken.bind(Address.fromString(marketAddress))
   market.totalInterestAccumulatedExact = BigInt.fromI32(0)
   market.totalInterestAccumulated = zeroBD
 
@@ -139,7 +149,7 @@ export function updateMarket(event: AccrueInterest): Market {
     const underlyingPriceUSD = market.underlyingPriceUSD
     if (
       underlyingPriceUSD.equals(zeroBD) ||
-      blockTimestamp - market.accrualBlockTimestamp > blocksPerTenMin
+      blockTimestamp - market.accrualBlockTimestamp > secondsPerTenMin
     ) {
       market.underlyingPriceUSD = getUnderlyingPriceUSD(
         contractAddress,
@@ -167,7 +177,7 @@ export function updateMarket(event: AccrueInterest): Market {
     // Only update if it has not been updated in 10 minutes to speed up syncing process
     if (
       market.exchangeRate.equals(zeroBD) ||
-      blockTimestamp - market.accrualBlockTimestamp > blocksPerTenMin
+      blockTimestamp - market.accrualBlockTimestamp > secondsPerTenMin
     ) {
       market.exchangeRate = contract
         .exchangeRateStored()
@@ -184,7 +194,7 @@ export function updateMarket(event: AccrueInterest): Market {
       .truncate(mantissaFactor)
 
     // Only update if it has not been updated in 10 minutes to speed up syncing process
-    if (blockTimestamp - market.accrualBlockTimestamp > blocksPerTenMin) {
+    if (blockTimestamp - market.accrualBlockTimestamp > secondsPerTenMin) {
       market.reserves = contract
         .totalReserves()
         .toBigDecimal()
@@ -202,12 +212,12 @@ export function updateMarket(event: AccrueInterest): Market {
       .truncate(market.underlyingDecimals)
 
     // Only update if it has not been updated in 10 minutes to speed up syncing process
-    if (blockTimestamp - market.accrualBlockTimestamp > blocksPerTenMin) {
+    if (blockTimestamp - market.accrualBlockTimestamp > secondsPerTenMin) {
       // Must convert to BigDecimal, and remove 10^18 that is used for Exp in Compound Solidity
       market.borrowRate = contract
         .borrowRatePerSecond()
         .toBigDecimal()
-        .times(BigDecimal.fromString(blocksPerYear))
+        .times(BigDecimal.fromString(secondsPerYear))
         .div(mantissaFactorBD)
         .truncate(mantissaFactor)
 
@@ -220,7 +230,7 @@ export function updateMarket(event: AccrueInterest): Market {
       } else {
         market.supplyRate = supplyRatePerSecond.value
           .toBigDecimal()
-          .times(BigDecimal.fromString(blocksPerYear))
+          .times(BigDecimal.fromString(secondsPerYear))
           .div(mantissaFactorBD)
           .truncate(mantissaFactor)
       }

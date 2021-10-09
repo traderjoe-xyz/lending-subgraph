@@ -28,6 +28,12 @@ dataSources:
           file: ./node_modules/@traderjoe-xyz/lending/abi/PriceOracle.json
         - name: ERC20
           file: ./abis/Erc20.json
+        - name: JWrappedNative
+          file: ./node_modules/@traderjoe-xyz/lending/abi/JWrappedNative.json
+        - name: JCollateralCapErc20
+          file: ./node_modules/@traderjoe-xyz/lending/abi/JCollateralCapErc20.json
+        - name: JoeLens
+          file: ./node_modules/@traderjoe-xyz/lending/abi/JoeLens.json
       eventHandlers:
         - event: MarketListed(address)
           handler: handleMarketListed
@@ -65,6 +71,12 @@ templates:
           file: ./node_modules/@traderjoe-xyz/lending/abi/PriceOracle.json
         - name: ERC20
           file: ./abis/Erc20.json
+        - name: JWrappedNative
+          file: ./node_modules/@traderjoe-xyz/lending/abi/JWrappedNative.json
+        - name: JCollateralCapErc20
+          file: ./node_modules/@traderjoe-xyz/lending/abi/JCollateralCapErc20.json
+        - name: JoeLens
+          file: ./node_modules/@traderjoe-xyz/lending/abi/JoeLens.json
       eventHandlers:
         - event: Mint(address,uint256,uint256)
           handler: handleMint
