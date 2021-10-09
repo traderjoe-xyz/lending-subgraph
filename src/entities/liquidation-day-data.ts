@@ -1,4 +1,4 @@
-import { LiquidationDayData, Market } from '../../schema'
+import { LiquidationDayData, Market, LiquidationEvent } from '../../schema'
 import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
 
 export function updateLiquidationDayData(event: LiquidationBorrow): LiquidationDayData {
@@ -6,11 +6,15 @@ export function updateLiquidationDayData(event: LiquidationBorrow): LiquidationD
 
   const day = timestamp / 86400
 
-  const id = event.address.toHex().concat('-').concat(BigInt.fromI32(day).toString())
+  const id = event.address.toHexString().concat('-').concat(BigInt.fromI32(day).toString())
+  const mintID = event.transaction.hash
+  .toHexString()
+  .concat('-')
+  .concat(event.transactionLogIndex.toString())
 
-  const market = Market.load(event.address.toHex())
+  const market = Market.load(event.address.toHexString())
   let liquidationDayData = LiquidationDayData.load(id)
-  const liquidationBlock = event.params.liquidationBorrowMantissa
+  const liquidationBlock = LiquidationEvent.load(mintID)
 
   if (liquidationDayData === null) {
     liquidationDayData = new liquidationDayData(id)
