@@ -1,14 +1,49 @@
-import { MarketDayData, Market } from '../../schema'
-import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
+import {
+  MarketDayData,
+  Market,
+  MintEvent,
+  RedeemEvent,
+  BorrowEvent,
+  RepayEvent,
+} from '../types/schema'
+import { BigInt } from '@graphprotocol/graph-ts'
+import { Mint, Redeem, Borrow, RepayBorrow } from '../types/templates/JToken/JToken'
+import { zeroBD } from '../mappings/helpers'
 
 export function updateMarketDayDataMint(event: Mint): MarketDayData {
-  let marketDayData = setupMarketDayData(event)
-  
-  const mintBlock = event.params.mintMantissa
+  const timestamp = event.block.timestamp.toI32()
 
-  marketDayData.txCount = marketDayData.txCount.plus(BigInt.fromI32(1))
-  marketDayData.totalSupply = marketDayData.totalSupply.plus(mintBlock.amount)  
-  marketDayData.totalSupplyUSD = marketDayData.totalSupplyUSD.plus(mintBlock.underlyingAmount.multipliedBy(marketDayData.market.underlyingPriceUSD))  
+  const day = timestamp / 86400
+
+  const id = event.address
+    .toHexString()
+    .concat('-')
+    .concat(BigInt.fromI32(day).toString())
+  let marketDayData = MarketDayData.load(id)
+  const mintID = event.transaction.hash
+    .toHexString()
+    .concat('-')
+    .concat(event.transactionLogIndex.toString())
+
+  const mintBlock = MintEvent.load(mintID)
+  const market = Market.load(event.address.toHexString())
+
+  if (marketDayData === null) {
+    const marketDayData = new MarketDayData(id)
+    marketDayData.date = day * 86400
+    marketDayData.txCount = 0
+    marketDayData.totalBorrows = zeroBD
+    marketDayData.totalBorrowsUSD = zeroBD
+    marketDayData.totalSupply = zeroBD
+    marketDayData.totalSupplyUSD = zeroBD
+    marketDayData.market = market.id
+  }
+
+  marketDayData.txCount = marketDayData.txCount + 1
+  marketDayData.totalSupply = marketDayData.totalSupply.plus(mintBlock.amount)
+  marketDayData.totalSupplyUSD = marketDayData.totalSupplyUSD.plus(
+    mintBlock.underlyingAmount.times(market.underlyingPriceUSD),
+  )
 
   marketDayData.save()
 
@@ -16,13 +51,39 @@ export function updateMarketDayDataMint(event: Mint): MarketDayData {
 }
 
 export function updateMarketDayDataRedeem(event: Redeem): MarketDayData {
-  let marketDayData = setupMarketDayData(event)
+  const timestamp = event.block.timestamp.toI32()
 
-  const redeemBlock = event.params.redeemMantissa
+  const day = timestamp / 86400
 
-  marketDayData.txCount = marketDayData.txCount.plus(BigInt.fromI32(1))
-  marketDayData.totalSupply = marketDayData.totalSupply.minus(redeemBlock.amount)  
-  marketDayData.totalSupplyUSD = marketDayData.totalSupplyUSD.minus(redeemBlock.underlyingAmount.multipliedBy(marketDayData.market.underlyingPriceUSD))  
+  const id = event.address
+    .toHexString()
+    .concat('-')
+    .concat(BigInt.fromI32(day).toString())
+  let marketDayData = MarketDayData.load(id)
+  const mintID = event.transaction.hash
+    .toHexString()
+    .concat('-')
+    .concat(event.transactionLogIndex.toString())
+
+  const redeemBlock = RedeemEvent.load(mintID)
+  const market = Market.load(event.address.toHexString())
+
+  if (marketDayData === null) {
+    const marketDayData = new MarketDayData(id)
+    marketDayData.date = day * 86400
+    marketDayData.txCount = 0
+    marketDayData.totalBorrows = zeroBD
+    marketDayData.totalBorrowsUSD = zeroBD
+    marketDayData.totalSupply = zeroBD
+    marketDayData.totalSupplyUSD = zeroBD
+    marketDayData.market = market.id
+  }
+
+  marketDayData.txCount = marketDayData.txCount + 1
+  marketDayData.totalSupply = marketDayData.totalSupply.minus(redeemBlock.amount)
+  marketDayData.totalSupplyUSD = marketDayData.totalSupplyUSD.minus(
+    redeemBlock.underlyingAmount.times(market.underlyingPriceUSD),
+  )
 
   marketDayData.save()
 
@@ -30,55 +91,81 @@ export function updateMarketDayDataRedeem(event: Redeem): MarketDayData {
 }
 
 export function updateMarketDayDataBorrow(event: Borrow): MarketDayData {
-  let marketDayData = setupMarketDayData(event)
-
-  const borrowBlock = event.params.borrowMantissa
-
-  marketDayData.txCount = marketDayData.txCount.plus(BigInt.fromI32(1))
-  marketDayData.totalBorrow = marketDayData.totalBorrow.plus(borrowBlock.amount)  
-  marketDayData.totalBorrowUSD = marketDayData.totalBorrowUSD.plus(borrowBlock.underlyingAmount.multipliedBy(marketDayData.market.underlyingPriceUSD))  
-
-  marketDayData.save()
-
-  return marketDayData as MarketDayData
-}
-
-export function updateMarketDayDataRepay(event: Repay): MarketDayData {
-  let marketDayData = setupMarketDayData(event)
-
-  const repayBlock = event.params.repayMantissa
-
-  marketDayData.txCount = marketDayData.txCount.plus(BigInt.fromI32(1))
-  marketDayData.totalBorrow = marketDayData.totalBorrow.minus(repayBlock.amount)  
-  marketDayData.totalBorrowUSD = marketDayData.totalBorrowUSD.minus(repayBlock.underlyingAmount.multipliedBy(marketDayData.market.underlyingPriceUSD))  
-
-  marketDayData.save()
-
-  return marketDayData as MarketDayData
-}
-
-function setupMarketDayData(event: Mint | Redeem | Borrow | RepayBorrow): MarketDayData {
   const timestamp = event.block.timestamp.toI32()
 
   const day = timestamp / 86400
 
-  const id = event.address.toHex().concat('-').concat(BigInt.fromI32(day).toString())
-
+  const id = event.address
+    .toHexString()
+    .concat('-')
+    .concat(BigInt.fromI32(day).toString())
   let marketDayData = MarketDayData.load(id)
-  const market = Market.load(event.address.toHex())
+  const mintID = event.transaction.hash
+    .toHexString()
+    .concat('-')
+    .concat(event.transactionLogIndex.toString())
+
+  const borrowBlock = BorrowEvent.load(mintID)
+  const market = Market.load(event.address.toHexString())
 
   if (marketDayData === null) {
-    marketDayData = new marketDayData(id)
+    const marketDayData = new MarketDayData(id)
     marketDayData.date = day * 86400
-    marketDayData.txCount = BigInt.fromI32(0)
-    marketDayData.cash = BigDecimal.fromString('0')
-    marketDayData.reserves = BigDecimal.fromString('0')
-    marketDayData.totalBorrows = BigDecimal.fromString('0')
-    marketDayData.totalBorrowsUSD = BigDecimal.fromString('0')
-    marketDayData.totalSupply = BigDecimal.fromString('0')
-    marketDayData.totalSupplyUSD =  BigDecimal.fromString('0')
-    marketDayData.market = market
+    marketDayData.txCount = 0
+    marketDayData.totalBorrows = zeroBD
+    marketDayData.totalBorrowsUSD = zeroBD
+    marketDayData.totalSupply = zeroBD
+    marketDayData.totalSupplyUSD = zeroBD
+    marketDayData.market = market.id
   }
 
-  return marketDayData
+  marketDayData.txCount = marketDayData.txCount + 1
+  marketDayData.totalBorrows = marketDayData.totalBorrows.plus(borrowBlock.amount)
+  marketDayData.totalBorrowsUSD = marketDayData.totalBorrowsUSD.plus(
+    borrowBlock.amount.times(market.underlyingPriceUSD),
+  )
+
+  marketDayData.save()
+
+  return marketDayData as MarketDayData
+}
+
+export function updateMarketDayDataRepay(event: RepayBorrow): MarketDayData {
+  const timestamp = event.block.timestamp.toI32()
+
+  const day = timestamp / 86400
+
+  const id = event.address
+    .toHexString()
+    .concat('-')
+    .concat(BigInt.fromI32(day).toString())
+  let marketDayData = MarketDayData.load(id)
+  const mintID = event.transaction.hash
+    .toHexString()
+    .concat('-')
+    .concat(event.transactionLogIndex.toString())
+
+  const repayBlock = RepayEvent.load(mintID)
+  const market = Market.load(event.address.toHexString())
+
+  if (marketDayData === null) {
+    const marketDayData = new MarketDayData(id)
+    marketDayData.date = day * 86400
+    marketDayData.txCount = 0
+    marketDayData.totalBorrows = zeroBD
+    marketDayData.totalBorrowsUSD = zeroBD
+    marketDayData.totalSupply = zeroBD
+    marketDayData.totalSupplyUSD = zeroBD
+    marketDayData.market = market.id
+  }
+
+  marketDayData.txCount = marketDayData.txCount + 1
+  marketDayData.totalBorrows = marketDayData.totalBorrows.minus(repayBlock.amount)
+  marketDayData.totalBorrowsUSD = marketDayData.totalBorrowsUSD.minus(
+    repayBlock.amount.times(market.underlyingPriceUSD),
+  )
+
+  marketDayData.save()
+
+  return marketDayData as MarketDayData
 }
