@@ -303,30 +303,6 @@ type LiquidationEvent implements JTokenTransfer @entity {
     underlyingSymbol: String!
     # Underlying jToken amount that was repaid by liquidator
     underlyingRepayAmount: BigDecimal!
-    # Day data
-    dayData: LiquidationDayData!
-}
-
-"""
-LiquidationDayData stores information for liquidations by day
-"""
-type LiquidationDayData @entity {
-    # jTokenAddress-date
-    id: ID!
-    # day start timestamp
-    date: Int!
-    # jTokens seized
-    amount: BigDecimal!
-    # number of transactions/liquidations
-    txCount: Int!
-    # jToken that was seized as collateral
-    jTokenSymbol: String!
-    # Symbol of the underlying asset repaid through liquidation
-    underlyingSymbol: String!
-    # Underlying jToken amount that was repaid by liquidator
-    underlyingRepayAmount: BigDecimal!
-    # liquidation events associated with this day
-    liquidationEvents: [LiquidationEvent!] @derivedFrom(field: "dayData")
 }
 
 """
