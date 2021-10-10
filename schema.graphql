@@ -47,8 +47,6 @@ type Market @entity {
     underlyingAddress: Bytes!
     # Underlying token name
     underlyingName: String!
-    # Underlying price of token in USD
-    underlyingPrice: BigDecimal!
     # Underlying token symbol
     underlyingSymbol: String!
 
@@ -68,7 +66,6 @@ type Market @entity {
     # Market Day data
     marketDayData: [MarketDayData!]! @derivedFrom(field: "market")
 
-     # Added to follow interests generation (@Amxx)
     # Added to follow interests generation (@Amxx)
     # Total interest produced by borrowed assets
     totalInterestAccumulated: BigDecimal!
@@ -306,30 +303,6 @@ type LiquidationEvent implements JTokenTransfer @entity {
     underlyingSymbol: String!
     # Underlying jToken amount that was repaid by liquidator
     underlyingRepayAmount: BigDecimal!
-    # Day data
-    dayData: LiquidationDayData!
-}
-
-"""
-LiquidationDayData stores information for liquidations by day
-"""
-type LiquidationDayData @entity {
-    # jTokenAddress-date
-    id: ID!
-    # day start timestamp
-    date: Int!
-    # jTokens seized
-    amount: BigDecimal!
-    # number of transactions/liquidations
-    txCount: Int!
-    # jToken that was seized as collateral
-    jTokenSymbol: String!
-    # Symbol of the underlying asset repaid through liquidation
-    underlyingSymbol: String!
-    # Underlying jToken amount that was repaid by liquidator
-    underlyingRepayAmount: BigDecimal!
-    # liquidation events associated with this day
-    liquidationEvents: [LiquidationEvent!] @derivedFrom(field: "dayData")
 }
 
 """
