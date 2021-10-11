@@ -11,7 +11,7 @@ export function updateLiquidationDayData(event: LiquidateBorrow): LiquidationDay
 
   const liquidationBlock = LiquidationEvent.load(mintID)
 
-  let liquidationDayData = createLiquidationDayData(
+  let liquidationDayData = setupLiquidationDayData(
     event as LiquidateBorrow,
     liquidationBlock as LiquidationEvent,
   )
@@ -36,7 +36,7 @@ export function updateLiquidationDayData(event: LiquidateBorrow): LiquidationDay
   return liquidationDayData as LiquidationDayData
 }
 
-function createLiquidationDayData(
+function setupLiquidationDayData(
   event: LiquidateBorrow,
   liquidationBlock: LiquidationEvent,
 ): LiquidationDayData {
