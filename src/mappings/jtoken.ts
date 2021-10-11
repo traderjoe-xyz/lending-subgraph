@@ -33,6 +33,7 @@ import {
   mantissaFactorBD,
   mantissaFactor,
 } from './helpers'
+import { updateLiquidationDayData } from '../entities/liquidation-day-data'
 
 let network = dataSource.network()
 const JOETROLLER_ADDRESS: string =
@@ -353,7 +354,7 @@ export function handleRepayBorrow(event: RepayBorrow): void {
  * Liquidate an account who has fell below the collateral factor.
  *
  * event.params.borrower - the borrower who is getting liquidated of their jTokens
- * event.params.jTokenCollateral - the market ADDRESS of the ctoken being liquidated
+ * event.params.jTokenCollateral - the market ADDRESS of the jToken being liquidated
  * event.params.liquidator - the liquidator
  * event.params.repayAmount - the amount of underlying to be repaid
  * event.params.seizeTokens - jTokens seized (transfer event should handle this)
@@ -366,6 +367,7 @@ export function handleRepayBorrow(event: RepayBorrow): void {
  *    add liquidation counts in this handler.
  */
 export function handleLiquidateBorrow(event: LiquidateBorrow): void {
+  updateLiquidationDayData(event)
   let liquidatorID = event.params.liquidator.toHex()
   let liquidator = Account.load(liquidatorID)
   if (liquidator == null) {
