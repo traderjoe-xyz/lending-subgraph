@@ -317,8 +317,8 @@ type LiquidationDayData @entity {
     date: Int!
     # jTokens seized
     amount: BigDecimal!
-    # amount liquidated in USD
-    amountUSD: BigDecimal!
+    # repaid amount in USD
+    repaidUSD: BigDecimal!
     # number of transactions/liquidations
     txCount: Int!
     # jToken that was seized as collateral
