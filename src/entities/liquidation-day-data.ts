@@ -11,7 +11,10 @@ export function updateLiquidationDayData(event: LiquidateBorrow): LiquidationDay
 
   const liquidationBlock = LiquidationEvent.load(mintID)
 
-  let liquidationDayData = createLiquidationDayData(event, liquidationBlock)
+  let liquidationDayData = createLiquidationDayData(
+    event as LiquidateBorrow,
+    liquidationBlock as LiquidationEvent,
+  )
 
   const market = Market.load(event.address.toHexString())
 
@@ -60,5 +63,5 @@ function createLiquidationDayData(
     liquidationDayData.liquidationEvents = []
   }
 
-  return liquidationDayData
+  return liquidationDayData as LiquidationDayData
 }
