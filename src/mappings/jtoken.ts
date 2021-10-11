@@ -63,19 +63,6 @@ export function handleMint(event: Mint): void {
     .toHexString()
     .concat('-')
     .concat(event.transactionLogIndex.toString())
-  let accountID = event.params.minter.toHex()
-
-  // Update jTokenStats common for all events, and return the stats to update unique
-  // values for each event
-  let jTokenStats = updateCommonJTokenStats(
-    market.id,
-    market.symbol,
-    accountID,
-    event.transaction.hash,
-    event.block.timestamp,
-    event.block.number,
-    event.logIndex,
-  )
 
   let jTokenAmount = event.params.mintTokens
     .toBigDecimal()
@@ -115,19 +102,6 @@ export function handleRedeem(event: Redeem): void {
     .toHexString()
     .concat('-')
     .concat(event.transactionLogIndex.toString())
-  let accountID = event.params.redeemer.toHex()
-
-  // Update jTokenStats common for all events, and return the stats to update unique
-  // values for each event
-  let jTokenStats = updateCommonJTokenStats(
-    market.id,
-    market.symbol,
-    accountID,
-    event.transaction.hash,
-    event.block.timestamp,
-    event.block.number,
-    event.logIndex,
-  )
 
   let jTokenAmount = event.params.redeemTokens
     .toBigDecimal()
@@ -187,17 +161,21 @@ export function handleBorrow(event: Borrow): void {
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
+
   jTokenStats.borrowBalanceUnderlying = jTokenStats.storedBorrowBalance
     .times(market.borrowIndex)
     .div(jTokenStats.accountBorrowIndex)
 
   jTokenStats.accountBorrowIndex = market.borrowIndex
+
   jTokenStats.totalUnderlyingBorrowed = jTokenStats.totalUnderlyingBorrowed.plus(
     borrowAmountBD,
   )
+
   jTokenStats.lifetimeBorrowInterestAccrued = jTokenStats.borrowBalanceUnderlying
     .minus(jTokenStats.totalUnderlyingBorrowed)
     .plus(jTokenStats.totalUnderlyingRepaid)
+
   jTokenStats.save()
 
   const joeLensContract = JoeLens.bind(Address.fromString(JOELENS_ADDRESS))
@@ -283,15 +261,27 @@ export function handleRepayBorrow(event: RepayBorrow): void {
   let repayAmountBD = event.params.repayAmount
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
-  let repayAmountUSD = repayAmountBD.times(market.underlyingPriceUSD)
 
   jTokenStats.storedBorrowBalance = event.params.accountBorrows
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
+
   jTokenStats.borrowBalanceUnderlying = jTokenStats.storedBorrowBalance
     .times(market.borrowIndex)
     .div(jTokenStats.accountBorrowIndex)
+
+  jTokenStats.accountBorrowIndex = market.borrowIndex
+
+  jTokenStats.totalUnderlyingRepaid = jTokenStats.totalUnderlyingRepaid.plus(
+    repayAmountBD,
+  )
+
+  jTokenStats.lifetimeBorrowInterestAccrued = jTokenStats.borrowBalanceUnderlying
+    .minus(jTokenStats.totalUnderlyingBorrowed)
+    .plus(jTokenStats.totalUnderlyingRepaid)
+
+  jTokenStats.save()
 
   const joeLensContract = JoeLens.bind(Address.fromString(JOELENS_ADDRESS))
   const accountLimitInfoResult = joeLensContract.try_getAccountLimits(
@@ -313,15 +303,6 @@ export function handleRepayBorrow(event: RepayBorrow): void {
       .truncate(mantissaFactor)
     account.save()
   }
-
-  jTokenStats.accountBorrowIndex = market.borrowIndex
-  jTokenStats.totalUnderlyingRepaid = jTokenStats.totalUnderlyingRepaid.plus(
-    repayAmountBD,
-  )
-  jTokenStats.lifetimeBorrowInterestAccrued = jTokenStats.borrowBalanceUnderlying
-    .minus(jTokenStats.totalUnderlyingBorrowed)
-    .plus(jTokenStats.totalUnderlyingRepaid)
-  jTokenStats.save()
 
   let repayID = event.transaction.hash
     .toHexString()
@@ -522,6 +503,13 @@ export function handleTransfer(event: Transfer): void {
       event.block.timestamp,
       event.block.number,
       event.logIndex,
+    )
+
+    jTokenStatsTo.jTokenBalance = jTokenStatsTo.jTokenBalance.plus(
+      event.params.amount
+        .toBigDecimal()
+        .div(jTokenDecimalsBD)
+        .truncate(jTokenDecimals),
     )
 
     jTokenStatsTo.totalUnderlyingSupplied = jTokenStatsTo.totalUnderlyingSupplied.plus(
