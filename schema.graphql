@@ -63,12 +63,36 @@ type Market @entity {
     underlyingPriceUSD: BigDecimal!
     # Underlying token decimal length
     underlyingDecimals: Int!
+    # Market Day data
+    marketDayData: [MarketDayData!]! @derivedFrom(field: "market")
 
-     # Added to follow interests generation (@Amxx)
+    # Added to follow interests generation (@Amxx)
     # Total interest produced by borrowed assets
     totalInterestAccumulated: BigDecimal!
     # Total interest produced by borrowed assets (non decimal value)
     totalInterestAccumulatedExact: BigInt!
+}
+
+"""
+MarketDayData stores all high level variables for a jToken market per day
+"""
+type MarketDayData @entity {
+    "JTokenAddress-date"
+    id: ID!
+    # start of day timestamp
+    date: Int!
+    # number of transactions
+    txCount: Int!
+    # Market Entity
+    market: Market!
+    # Borrows in the market
+    totalBorrows: BigDecimal!
+    # Borrows in USD
+    totalBorrowsUSD: BigDecimal!
+    "JToken supply. JTokens have 8 decimals"
+    totalSupply: BigDecimal!
+    # Supply in USD
+    totalSupplyUSD: BigDecimal!
 }
 
 """
@@ -279,6 +303,32 @@ type LiquidationEvent implements JTokenTransfer @entity {
     underlyingSymbol: String!
     # Underlying jToken amount that was repaid by liquidator
     underlyingRepayAmount: BigDecimal!
+    # Day data
+    dayData: LiquidationDayData!
+}
+
+"""
+LiquidationDayData stores information for liquidations by day
+"""
+type LiquidationDayData @entity {
+    # jTokenAddress-date
+    id: ID!
+    # day start timestamp
+    date: Int!
+    # jTokens seized
+    amount: BigDecimal!
+    # repaid amount in USD
+    repaidUSD: BigDecimal!
+    # number of transactions/liquidations
+    txCount: Int!
+    # jToken that was seized as collateral
+    jTokenSymbol: String!
+    # Symbol of the underlying asset repaid through liquidation
+    underlyingSymbol: String!
+    # Underlying jToken amount that was repaid by liquidator
+    underlyingRepayAmount: BigDecimal!
+    # liquidation events associated with this day
+    liquidationEvents: [LiquidationEvent!] @derivedFrom(field: "dayData")
 }
 
 """
