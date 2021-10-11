@@ -23,7 +23,7 @@ export function updateLiquidationDayData(event: LiquidateBorrow): LiquidationDay
   )
 
   liquidationDayData.amount = liquidationDayData.amount.plus(liquidationBlock.amount)
-  liquidationDayData.amountUSD = liquidationDayData.amountUSD.plus(
+  liquidationDayData.repaidUSD = liquidationDayData.repaidUSD.plus(
     liquidationBlockAmountUSD,
   )
   liquidationDayData.txCount = liquidationDayData.txCount + 1
@@ -55,7 +55,7 @@ function setupLiquidationDayData(
     liquidationDayData = new LiquidationDayData(id)
     liquidationDayData.date = day * 86400
     liquidationDayData.amount = zeroBD
-    liquidationDayData.amountUSD = zeroBD
+    liquidationDayData.repaidUSD = zeroBD
     liquidationDayData.txCount = 0
     liquidationDayData.jTokenSymbol = liquidationBlock.jTokenSymbol
     liquidationDayData.underlyingSymbol = liquidationBlock.underlyingSymbol
