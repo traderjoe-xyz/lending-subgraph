@@ -71,8 +71,6 @@ export function handleMint(event: Mint): void {
     .concat('-')
     .concat(event.transactionLogIndex.toString())
 
-  updateMarketDayDataMint(event)
-
   let jTokenAmount = event.params.mintTokens
     .toBigDecimal()
     .div(jTokenDecimalsBD)
@@ -91,6 +89,8 @@ export function handleMint(event: Mint): void {
   mint.jTokenSymbol = market.symbol
   mint.underlyingAmount = underlyingAmount
   mint.save()
+
+  updateMarketDayDataMint(event)
 }
 
 /*  Account supplies jTokens into market and receives underlying asset in exchange
@@ -112,8 +112,6 @@ export function handleRedeem(event: Redeem): void {
     .concat('-')
     .concat(event.transactionLogIndex.toString())
 
-  updateMarketDayDataRedeem(event)
-
   let jTokenAmount = event.params.redeemTokens
     .toBigDecimal()
     .div(jTokenDecimalsBD)
@@ -132,6 +130,8 @@ export function handleRedeem(event: Redeem): void {
   redeem.jTokenSymbol = market.symbol
   redeem.underlyingAmount = underlyingAmount
   redeem.save()
+
+  updateMarketDayDataRedeem(event)
 }
 
 /* Borrow assets from the protocol. All values either AVAX or ERC20
@@ -163,8 +163,6 @@ export function handleBorrow(event: Borrow): void {
     event.block.number,
     event.logIndex,
   )
-
-  updateMarketDayDataBorrow(event)
 
   let borrowAmountBD = event.params.borrowAmount
     .toBigDecimal()
@@ -235,6 +233,8 @@ export function handleBorrow(event: Borrow): void {
   borrow.blockTime = event.block.timestamp.toI32()
   borrow.underlyingSymbol = market.underlyingSymbol
   borrow.save()
+
+  updateMarketDayDataBorrow(event)
 }
 
 /* Repay some amount borrowed. Anyone can repay anyones balance
@@ -270,8 +270,6 @@ export function handleRepayBorrow(event: RepayBorrow): void {
     event.block.number,
     event.logIndex,
   )
-
-  updateMarketDayDataRepay(event)
 
   let repayAmountBD = event.params.repayAmount
     .toBigDecimal()
@@ -343,6 +341,8 @@ export function handleRepayBorrow(event: RepayBorrow): void {
   repay.underlyingSymbol = market.underlyingSymbol
   repay.payer = event.params.payer
   repay.save()
+
+  updateMarketDayDataRepay(event)
 }
 
 /*
@@ -362,7 +362,6 @@ export function handleRepayBorrow(event: RepayBorrow): void {
  *    add liquidation counts in this handler.
  */
 export function handleLiquidateBorrow(event: LiquidateBorrow): void {
-  updateLiquidationDayData(event)
   let liquidatorID = event.params.liquidator.toHex()
   let liquidator = Account.load(liquidatorID)
   if (liquidator == null) {
@@ -409,6 +408,8 @@ export function handleLiquidateBorrow(event: LiquidateBorrow): void {
   liquidation.underlyingRepayAmount = underlyingRepayAmount
   liquidation.jTokenSymbol = marketJTokenLiquidated.symbol
   liquidation.save()
+
+  updateLiquidationDayData(event)
 }
 
 /* Transferring of jTokens

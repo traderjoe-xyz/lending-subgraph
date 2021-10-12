@@ -19,7 +19,6 @@ export function updateMarketDayDataMint(event: Mint): MarketDayData {
     .toHexString()
     .concat('-')
     .concat(BigInt.fromI32(day).toString())
-  let marketDayData = MarketDayData.load(id)
   const mintID = event.transaction.hash
     .toHexString()
     .concat('-')
@@ -28,8 +27,9 @@ export function updateMarketDayDataMint(event: Mint): MarketDayData {
   const mintBlock = MintEvent.load(mintID)
   const market = Market.load(event.address.toHexString())
 
+  let marketDayData = MarketDayData.load(id)
   if (marketDayData === null) {
-    const marketDayData = new MarketDayData(id)
+    marketDayData = new MarketDayData(id)
     marketDayData.date = day * 86400
     marketDayData.txCount = 0
     marketDayData.totalBorrows = zeroBD
@@ -59,7 +59,6 @@ export function updateMarketDayDataRedeem(event: Redeem): MarketDayData {
     .toHexString()
     .concat('-')
     .concat(BigInt.fromI32(day).toString())
-  let marketDayData = MarketDayData.load(id)
   const mintID = event.transaction.hash
     .toHexString()
     .concat('-')
@@ -68,8 +67,9 @@ export function updateMarketDayDataRedeem(event: Redeem): MarketDayData {
   const redeemBlock = RedeemEvent.load(mintID)
   const market = Market.load(event.address.toHexString())
 
+  let marketDayData = MarketDayData.load(id)
   if (marketDayData === null) {
-    const marketDayData = new MarketDayData(id)
+    marketDayData = new MarketDayData(id)
     marketDayData.date = day * 86400
     marketDayData.txCount = 0
     marketDayData.totalBorrows = zeroBD
@@ -99,7 +99,6 @@ export function updateMarketDayDataBorrow(event: Borrow): MarketDayData {
     .toHexString()
     .concat('-')
     .concat(BigInt.fromI32(day).toString())
-  let marketDayData = MarketDayData.load(id)
   const mintID = event.transaction.hash
     .toHexString()
     .concat('-')
@@ -108,8 +107,9 @@ export function updateMarketDayDataBorrow(event: Borrow): MarketDayData {
   const borrowBlock = BorrowEvent.load(mintID)
   const market = Market.load(event.address.toHexString())
 
+  let marketDayData = MarketDayData.load(id)
   if (marketDayData === null) {
-    const marketDayData = new MarketDayData(id)
+    marketDayData = new MarketDayData(id)
     marketDayData.date = day * 86400
     marketDayData.txCount = 0
     marketDayData.totalBorrows = zeroBD
@@ -139,7 +139,6 @@ export function updateMarketDayDataRepay(event: RepayBorrow): MarketDayData {
     .toHexString()
     .concat('-')
     .concat(BigInt.fromI32(day).toString())
-  let marketDayData = MarketDayData.load(id)
   const mintID = event.transaction.hash
     .toHexString()
     .concat('-')
@@ -148,8 +147,9 @@ export function updateMarketDayDataRepay(event: RepayBorrow): MarketDayData {
   const repayBlock = RepayEvent.load(mintID)
   const market = Market.load(event.address.toHexString())
 
+  let marketDayData = MarketDayData.load(id)
   if (marketDayData === null) {
-    const marketDayData = new MarketDayData(id)
+    marketDayData = new MarketDayData(id)
     marketDayData.date = day * 86400
     marketDayData.txCount = 0
     marketDayData.totalBorrows = zeroBD
