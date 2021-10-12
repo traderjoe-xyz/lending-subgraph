@@ -409,7 +409,10 @@ export function handleLiquidateBorrow(event: LiquidateBorrow): void {
   liquidation.jTokenSymbol = marketJTokenLiquidated.symbol
   liquidation.save()
 
-  updateLiquidationDayData(event)
+  const liquidationDayData = updateLiquidationDayData(event)
+
+  liquidation.dayData = liquidationDayData.id
+  liquidation.save()
 }
 
 /* Transferring of jTokens

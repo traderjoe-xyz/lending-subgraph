@@ -30,7 +30,6 @@ export function updateLiquidationDayData(event: LiquidateBorrow): LiquidationDay
   liquidationDayData.underlyingRepayAmount = liquidationDayData.underlyingRepayAmount.plus(
     liquidationBlock.underlyingRepayAmount,
   )
-  liquidationDayData.liquidationEvents.push(liquidationBlock.id)
   liquidationDayData.save()
 
   return liquidationDayData as LiquidationDayData
@@ -60,7 +59,6 @@ function setupLiquidationDayData(
     liquidationDayData.jTokenSymbol = liquidationBlock.jTokenSymbol
     liquidationDayData.underlyingSymbol = liquidationBlock.underlyingSymbol
     liquidationDayData.underlyingRepayAmount = zeroBD
-    liquidationDayData.liquidationEvents = []
   }
 
   return liquidationDayData as LiquidationDayData
