@@ -8,9 +8,9 @@ dataSources:
     name: Joetroller
     network: avalanche
     source:
-      address: "0x3d5BC3c8d13dcB8bF317092d84783c2697AE9258"
+      address: "0xdc13687554205E5b89Ac783db14bb5bba4A1eDaC"
       abi: Joetroller
-      startBlock: 10579797
+      startBlock: 5440000 
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -19,6 +19,7 @@ dataSources:
       entities:
         - Joetroller
         - Market
+        - MarketDayData
       abis:
         - name: Joetroller
           file: ./node_modules/@traderjoe-xyz/lending/abi/Joetroller.json
