@@ -29,7 +29,7 @@ export function updateMarketDayDataMint(event: Mint): MarketDayData {
   const market = Market.load(event.address.toHexString())
 
   if (marketDayData === null) {
-    const marketDayData = new MarketDayData(id)
+    marketDayData = new MarketDayData(id)
     marketDayData.date = day * 86400
     marketDayData.txCount = 0
     marketDayData.totalBorrows = zeroBD
@@ -69,7 +69,7 @@ export function updateMarketDayDataRedeem(event: Redeem): MarketDayData {
   const market = Market.load(event.address.toHexString())
 
   if (marketDayData === null) {
-    const marketDayData = new MarketDayData(id)
+    marketDayData = new MarketDayData(id)
     marketDayData.date = day * 86400
     marketDayData.txCount = 0
     marketDayData.totalBorrows = zeroBD
@@ -109,7 +109,7 @@ export function updateMarketDayDataBorrow(event: Borrow): MarketDayData {
   const market = Market.load(event.address.toHexString())
 
   if (marketDayData === null) {
-    const marketDayData = new MarketDayData(id)
+    marketDayData = new MarketDayData(id)
     marketDayData.date = day * 86400
     marketDayData.txCount = 0
     marketDayData.totalBorrows = zeroBD
@@ -149,7 +149,7 @@ export function updateMarketDayDataRepay(event: RepayBorrow): MarketDayData {
   const market = Market.load(event.address.toHexString())
 
   if (marketDayData === null) {
-    const marketDayData = new MarketDayData(id)
+    marketDayData = new MarketDayData(id)
     marketDayData.date = day * 86400
     marketDayData.txCount = 0
     marketDayData.totalBorrows = zeroBD
