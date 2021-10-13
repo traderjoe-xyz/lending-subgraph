@@ -284,23 +284,23 @@ type RedeemEvent implements JTokenTransfer @entity {
 LiquidationEvent stores information for liquidations. The event is emitted from
 the jToken market address.
 """
-type LiquidationEvent implements JTokenTransfer @entity {
+type LiquidationEvent @entity {
     # Transaction hash concatenated with log index
     id: ID!
-    # jTokens seized
-    amount: BigDecimal!
     # Liquidator receiving tokens
-    to: Bytes!
+    liquidator: Bytes!
     # Account being liquidated (borrower)
-    from: Bytes!
+    borrower: Bytes!
     # Block number
     blockNumber: Int!
     # Block time
     blockTime: Int!
-    # jToken that was sezied as collateral
-    jTokenSymbol: String!
+    # Symbol of the underlying collateral asset that was seized by liquidator
+    underlyingCollateralSeizedSymbol: String!
+    # Underlying collateral jToken amount that was seized by liquidator
+    underlyingCollateralSeizedAmount: BigDecimal!
     # Symbol of the underlying asset repaid through liquidation
-    underlyingSymbol: String!
+    underlyingRepaySymbol: String!
     # Underlying jToken amount that was repaid by liquidator
     underlyingRepayAmount: BigDecimal!
     # Day data

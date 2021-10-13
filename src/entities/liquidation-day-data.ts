@@ -22,7 +22,9 @@ export function updateLiquidationDayData(event: LiquidateBorrow): LiquidationDay
     market.underlyingPriceUSD,
   )
 
-  liquidationDayData.amount = liquidationDayData.amount.plus(liquidationBlock.amount)
+  liquidationDayData.amount = liquidationDayData.amount.plus(
+    liquidationBlock.underlyingCollateralSeizedAmount,
+  )
   liquidationDayData.repaidUSD = liquidationDayData.repaidUSD.plus(
     liquidationBlockAmountUSD,
   )
@@ -56,8 +58,8 @@ function setupLiquidationDayData(
     liquidationDayData.amount = zeroBD
     liquidationDayData.repaidUSD = zeroBD
     liquidationDayData.txCount = 0
-    liquidationDayData.jTokenSymbol = liquidationBlock.jTokenSymbol
-    liquidationDayData.underlyingSymbol = liquidationBlock.underlyingSymbol
+    liquidationDayData.jTokenSymbol = liquidationBlock.underlyingCollateralSeizedSymbol
+    liquidationDayData.underlyingSymbol = liquidationBlock.underlyingRepaySymbol
     liquidationDayData.underlyingRepayAmount = zeroBD
   }
 

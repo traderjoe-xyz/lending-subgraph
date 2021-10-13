@@ -383,30 +383,30 @@ export function handleLiquidateBorrow(event: LiquidateBorrow): void {
   // the underwater borrower. So we must get that address from the event, and
   // the repay token is the event.address
   let marketRepayToken = Market.load(event.address.toHexString())
-  let marketJTokenLiquidated = Market.load(event.params.jTokenCollateral.toHexString())
+  let marketCollateralSeized = Market.load(event.params.jTokenCollateral.toHexString())
   let mintID = event.transaction.hash
     .toHexString()
     .concat('-')
     .concat(event.transactionLogIndex.toString())
 
-  let jTokenAmount = event.params.seizeTokens
-    .toBigDecimal()
-    .div(jTokenDecimalsBD)
-    .truncate(jTokenDecimals)
+  const underlyingCollateralSeizedAmount = marketCollateralSeized.exchangeRate
+    .times(event.params.seizeTokens.toBigDecimal().div(jTokenDecimalsBD))
+    .truncate(marketCollateralSeized.underlyingDecimals)
+
   let underlyingRepayAmount = event.params.repayAmount
     .toBigDecimal()
     .div(exponentToBigDecimal(marketRepayToken.underlyingDecimals))
     .truncate(marketRepayToken.underlyingDecimals)
 
   let liquidation = new LiquidationEvent(mintID)
-  liquidation.amount = jTokenAmount
-  liquidation.to = event.params.liquidator
-  liquidation.from = event.params.borrower
+  liquidation.liquidator = event.params.liquidator
+  liquidation.borrower = event.params.borrower
   liquidation.blockNumber = event.block.number.toI32()
   liquidation.blockTime = event.block.timestamp.toI32()
-  liquidation.underlyingSymbol = marketRepayToken.underlyingSymbol
+  liquidation.underlyingCollateralSeizedSymbol = marketCollateralSeized.underlyingSymbol
+  liquidation.underlyingCollateralSeizedAmount = underlyingCollateralSeizedAmount
+  liquidation.underlyingRepaySymbol = marketRepayToken.underlyingSymbol
   liquidation.underlyingRepayAmount = underlyingRepayAmount
-  liquidation.jTokenSymbol = marketJTokenLiquidated.symbol
   liquidation.save()
 
   const liquidationDayData = updateLiquidationDayData(event)
