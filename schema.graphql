@@ -311,22 +311,28 @@ type LiquidationEvent @entity {
 LiquidationDayData stores information for liquidations by day
 """
 type LiquidationDayData @entity {
-    # jTokenAddress-date
+    # seizedAssetAddress-repaidAssetAddress-date
     id: ID!
     # day start timestamp
     date: Int!
-    # jTokens seized
-    amount: BigDecimal!
-    # repaid amount in USD
-    repaidUSD: BigDecimal!
-    # number of transactions/liquidations
-    txCount: Int!
-    # jToken that was seized as collateral
-    jTokenSymbol: String!
+    # Underlying collateral jToken amount that was seized by liquidator
+    underlyingCollateralSeizedAmount: BigDecimal!
+    # Underlying collateral USD amount that was seized by liquidator
+    underlyingCollateralSeizedAmountUSD: BigDecimal!
+    # Address of the underlying collateral asset that was seized by liquidator
+    underlyingCollateralSeizedAddress: String!
     # Symbol of the underlying asset repaid through liquidation
-    underlyingSymbol: String!
+    underlyingCollateralSeizedSymbol: String!
     # Underlying jToken amount that was repaid by liquidator
     underlyingRepayAmount: BigDecimal!
+    # Underlying USD amount that was repaid by liquidator
+    underlyingRepayAmountUSD: BigDecimal!
+    # Symbol of the underlying asset repaid through liquidation
+    underlyingRepaySymbol: String!
+    # Address of the underlying asset repaid through liquidation
+    underlyingRepayAddress: String!
+    # number of transactions/liquidations
+    txCount: Int!
     # liquidation events associated with this day
     liquidationEvents: [LiquidationEvent!] @derivedFrom(field: "dayData")
 }
