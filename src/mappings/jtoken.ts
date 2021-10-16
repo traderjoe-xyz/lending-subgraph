@@ -11,6 +11,7 @@ import {
   NewReserveFactor,
   NewMarketInterestRateModel,
 } from '../types/templates/JToken/JToken'
+import { Flashloan } from '../types/templates/JToken/JCollateralCapErc20'
 import { JoeLens } from '../types/Joetroller/JoeLens'
 import {
   Market,
@@ -21,6 +22,7 @@ import {
   TransferEvent,
   BorrowEvent,
   RepayEvent,
+  FlashloanEvent,
 } from '../types/schema'
 
 import { createMarket, updateMarket } from './markets'
@@ -91,6 +93,36 @@ export function handleMint(event: Mint): void {
   mint.save()
 
   updateMarketDayDataMint(event)
+}
+export function handleFlashloan(event: Flashloan): void {
+  const marketID = event.address.toHex()
+  const market = Market.load(marketID)
+  const flashloanID = event.transaction.hash
+    .toHexString()
+    .concat('-')
+    .concat(event.transactionLogIndex.toString())
+
+  const underlyingAmount = event.params.amount
+    .toBigDecimal()
+    .div(exponentToBigDecimal(market.underlyingDecimals))
+    .truncate(market.underlyingDecimals)
+  const totalFee = event.params.totalFee
+    .toBigDecimal()
+    .div(exponentToBigDecimal(market.underlyingDecimals))
+    .truncate(market.underlyingDecimals)
+  const reservesFee = event.params.reservesFee
+    .toBigDecimal()
+    .div(exponentToBigDecimal(market.underlyingDecimals))
+    .truncate(market.underlyingDecimals)
+
+  const flashloan = new FlashloanEvent(flashloanID)
+  flashloan.amount = underlyingAmount
+  flashloan.totalFee = totalFee
+  flashloan.reservesFee = reservesFee
+  flashloan.receiver = event.params.receiver
+  flashloan.blockNumber = event.block.number.toI32()
+  flashloan.blockTime = event.block.timestamp.toI32()
+  flashloan.save()
 }
 
 /*  Account supplies jTokens into market and receives underlying asset in exchange

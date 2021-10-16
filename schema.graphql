@@ -400,3 +400,22 @@ type RepayEvent implements UnderlyingTransfer @entity {
     # Payer of the borrow funds
     payer: Bytes!
 }
+
+"""
+FlashloanEvent stores information for flash loans.
+"""
+type FlashloanEvent @entity {
+  # Transaction hash concatenated with log index
+  id: ID!
+  # Amount of underlying borrowed
+  amount: BigDecimal!
+  # Total fee
+  totalFee: BigDecimal!
+  # Reserves fee
+  reservesFee: BigDecimal!
+  # Receiver address
+  receiver: Bytes!
+  underlyingSymbol: String!
+  blockNumber: Int!
+  blockTime: Int!
+}
