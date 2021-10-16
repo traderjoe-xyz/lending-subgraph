@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Joetroller
-    network: rinkeby 
+    network: avalanche
     source:
-      address: "0x5b0a2Fa14808E34C5518E19f0DBc39F61d080B11"
+      address: "0xdc13687554205E5b89Ac783db14bb5bba4A1eDaC"
       abi: Joetroller
-      startBlock: 9000000
+      startBlock: 5440000 
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -19,6 +19,7 @@ dataSources:
       entities:
         - Joetroller
         - Market
+        - MarketDayData
       abis:
         - name: Joetroller
           file: ./node_modules/@traderjoe-xyz/lending/abi/Joetroller.json
@@ -52,7 +53,7 @@ dataSources:
 templates:
   - name: JToken
     kind: ethereum/contract
-    network: rinkeby 
+    network: avalanche
     source:
       abi: JToken
     mapping:
@@ -77,10 +78,6 @@ templates:
           file: ./node_modules/@traderjoe-xyz/lending/abi/JCollateralCapErc20.json
         - name: JoeLens
           file: ./node_modules/@traderjoe-xyz/lending/abi/JoeLens.json
-        - name: JWrappedNativeInterface
-          file: ./node_modules/@traderjoe-xyz/lending/abi/JWrappedNativeInterface.json
-        - name: JCapableErc20Interface
-          file: ./node_modules/@traderjoe-xyz/lending/abi/JCapableErc20Interface.json
       eventHandlers:
         - event: Mint(address,uint256,uint256)
           handler: handleMint
@@ -100,5 +97,23 @@ templates:
           handler: handleTransfer
         - event: NewMarketInterestRateModel(address,address)
           handler: handleNewMarketInterestRateModel
+  - name: JCollateralCapErc20 
+    kind: ethereum/contract
+    network: avalanche
+    source:
+      abi: JCollateralCapErc20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mappings/jToken.ts
+      entities:
+        - Flashloan
+      abis:
+        - name: JToken
+          file: ./node_modules/@traderjoe-xyz/lending/abi/JToken.json
+        - name: JCollateralCapErc20
+          file: ./node_modules/@traderjoe-xyz/lending/abi/JCollateralCapErc20.json
+      eventHandlers:
         - event: Flashloan(indexed address,uint256,uint256,uint256)
           handler: handleFlashloan
