@@ -93,6 +93,8 @@ type MarketDayData @entity {
     totalSupply: BigDecimal!
     # Supply in USD
     totalSupplyUSD: BigDecimal!
+    # reserves in USD
+    totalReservesUSD: BigDecimal!
 }
 
 """
