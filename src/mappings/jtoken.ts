@@ -35,12 +35,7 @@ import {
   mantissaFactorBD,
   mantissaFactor,
 } from './helpers'
-import {
-  updateMarketDayDataMint,
-  updateMarketDayDataRedeem,
-  updateMarketDayDataBorrow,
-  updateMarketDayDataRepay,
-} from '../entities/market-day-data'
+import { updateMarketDayData } from '../entities/market-day-data'
 import { updateLiquidationDayData } from '../entities/liquidation-day-data'
 
 let network = dataSource.network()
@@ -92,8 +87,17 @@ export function handleMint(event: Mint): void {
   mint.underlyingAmount = underlyingAmount
   mint.save()
 
-  updateMarketDayDataMint(event)
+  updateMarketDayData(event)
 }
+
+/* Account borrows underlying tokens and pays a fee.
+ *
+ * event.params.receiver is the borrower
+ * event.params.amount is the underlying amount borrowed
+ * event.params.totalFee is the extra underlying amount paid as a fee
+ * event.params.reservesFee is the extra underlying amount that goes to reserves
+ *
+ */
 export function handleFlashloan(event: Flashloan): void {
   const marketID = event.address.toHex()
   const market = Market.load(marketID)
@@ -163,7 +167,7 @@ export function handleRedeem(event: Redeem): void {
   redeem.underlyingAmount = underlyingAmount
   redeem.save()
 
-  updateMarketDayDataRedeem(event)
+  updateMarketDayData(event)
 }
 
 /* Borrow assets from the protocol. All values either AVAX or ERC20
@@ -266,7 +270,7 @@ export function handleBorrow(event: Borrow): void {
   borrow.underlyingSymbol = market.underlyingSymbol
   borrow.save()
 
-  updateMarketDayDataBorrow(event)
+  updateMarketDayData(event)
 }
 
 /* Repay some amount borrowed. Anyone can repay anyones balance
@@ -374,7 +378,7 @@ export function handleRepayBorrow(event: RepayBorrow): void {
   repay.payer = event.params.payer
   repay.save()
 
-  updateMarketDayDataRepay(event)
+  updateMarketDayData(event)
 }
 
 /*
