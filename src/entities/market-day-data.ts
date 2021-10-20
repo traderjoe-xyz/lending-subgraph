@@ -36,6 +36,7 @@ export function updateMarketDayDataMint(event: Mint): MarketDayData {
     marketDayData.totalBorrowsUSD = zeroBD
     marketDayData.totalSupply = zeroBD
     marketDayData.totalSupplyUSD = zeroBD
+    marketDayData.totalReservesUSD = market.reserves.times(market.underlyingPriceUSD)
     marketDayData.market = market.id
   }
 
@@ -76,6 +77,7 @@ export function updateMarketDayDataRedeem(event: Redeem): MarketDayData {
     marketDayData.totalBorrowsUSD = zeroBD
     marketDayData.totalSupply = zeroBD
     marketDayData.totalSupplyUSD = zeroBD
+    marketDayData.totalReservesUSD = market.reserves.times(market.underlyingPriceUSD)
     marketDayData.market = market.id
   }
 
@@ -116,6 +118,7 @@ export function updateMarketDayDataBorrow(event: Borrow): MarketDayData {
     marketDayData.totalBorrowsUSD = zeroBD
     marketDayData.totalSupply = zeroBD
     marketDayData.totalSupplyUSD = zeroBD
+    marketDayData.totalReservesUSD = market.reserves.times(market.underlyingPriceUSD)
     marketDayData.market = market.id
   }
 
@@ -156,6 +159,7 @@ export function updateMarketDayDataRepay(event: RepayBorrow): MarketDayData {
     marketDayData.totalBorrowsUSD = zeroBD
     marketDayData.totalSupply = zeroBD
     marketDayData.totalSupplyUSD = zeroBD
+    marketDayData.totalReservesUSD = market.reserves.times(market.underlyingPriceUSD)
     marketDayData.market = market.id
   }
 
