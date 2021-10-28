@@ -40,12 +40,12 @@ import { updateLiquidationDayData } from '../entities/liquidation-day-data'
 
 let network = dataSource.network()
 const JOETROLLER_ADDRESS: string =
-  network === 'avalanche'
-    ? '0x0000000000000000000000000000000000000000' // avalanche
+  network == 'avalanche'
+    ? '0xdc13687554205E5b89Ac783db14bb5bba4A1eDaC' // avalanche
     : '0x5b0a2fa14808e34c5518e19f0dbc39f61d080b11' // rinkeby
 const JOELENS_ADDRESS: string =
-  network === 'avalanche'
-    ? '0x0000000000000000000000000000000000000000'
+  network == 'avalanche'
+    ? '0x997fbA28c75747417571c5F3fe50015AaC2BB073'
     : '0x4f101798dd4af8a2a8325f4c54c195a61c59dc62'
 
 /* Account supplies assets into market and receives jTokens in exchange

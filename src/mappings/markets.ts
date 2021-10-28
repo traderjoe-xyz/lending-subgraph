@@ -29,12 +29,12 @@ let network = dataSource.network()
 
 let jAVAXAddress: string =
   network == 'avalanche'
-    ? '0x0000000000000000000000000000000000000000' // avalanche
+    ? '0xC22F01ddc8010Ee05574028528614634684EC29e' // avalanche
     : '0xaafe9d8346aefd57399e86d91bbfe256dc0dcac0' // rinkeby
 
 let jUSDCAddress =
   network == 'avalanche'
-    ? '0x0000000000000000000000000000000000000000' // avalanche
+    ? '0xEd6AaF91a2B084bd594DBd1245be3691F9f637aC' // avalanche
     : '0xe0447d1112ece174f2b351461367f9fbf9382661' // rinkeby
 
 let secondsPerYear = '31536000'
