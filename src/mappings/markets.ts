@@ -29,12 +29,12 @@ let network = dataSource.network()
 
 let jAVAXAddress: string =
   network == 'avalanche'
-    ? '0x0000000000000000000000000000000000000000' // avalanche
+    ? '0xc22f01ddc8010ee05574028528614634684ec29e' // avalanche
     : '0xaafe9d8346aefd57399e86d91bbfe256dc0dcac0' // rinkeby
 
 let jUSDCAddress =
   network == 'avalanche'
-    ? '0x0000000000000000000000000000000000000000' // avalanche
+    ? '0xed6aaf91a2b084bd594dbd1245be3691f9f637ac' // avalanche
     : '0xe0447d1112ece174f2b351461367f9fbf9382661' // rinkeby
 
 let secondsPerYear = '31536000'
@@ -57,6 +57,12 @@ function getUnderlyingPriceUSD(
   let mantissaDecimalFactor = 18 - underlyingDecimals + 18
   let bdFactor = exponentToBigDecimal(mantissaDecimalFactor)
   let oracle = PriceOracle.bind(oracleAddress)
+  if (
+    oracle.aggregators(eventAddress) ==
+    Address.fromString('0x0000000000000000000000000000000000000000')
+  ) {
+    return BigDecimal.fromString('0')
+  }
   underlyingPrice = oracle
     .getUnderlyingPrice(eventAddress)
     .toBigDecimal()
