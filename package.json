@@ -4,13 +4,13 @@
   "repository": "https://github.com/traderjoe_xyz/lending-subgraph",
   "license": "MIT",
   "scripts": {
-    "prepare": "mustache config/avax.json subgraph.template.yaml > subgraph.avax.yaml",
+    "prepare:avax": "mustache config/avax.json subgraph.template.yaml > subgraph.avax.yaml",
     "prepare:rinkeby": "mustache config/rinkeby.json subgraph.template.yaml > subgraph.rinkeby.yaml",
-    "codegen": "graph codegen --output-dir src/types/ subgraph.avax.yaml",
+    "codegen:avax": "graph codegen --output-dir src/types/ subgraph.avax.yaml",
     "codegen:rinkeby": "graph codegen --output-dir src/types/ subgraph-rinkeby.yaml",
-    "build": "graph build --ipfs https://api.staging.thegraph.com/ipfs/ subgraph.avax.yaml",
+    "build:avax": "graph build --ipfs https://api.staging.thegraph.com/ipfs/ subgraph.avax.yaml",
     "build:rinkeby": "graph build --ipfs https://api.staging.thegraph.com/ipfs/ subgraph-rinkeby.yaml",
-    "deploy": "graph deploy traderjoe-xyz/lending --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ subgraph.avax.yaml",
+    "deploy:avax": "graph deploy traderjoe-xyz/lending --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ subgraph.avax.yaml",
     "deploy:rinkeby": "graph deploy traderjoe-xyz/lending-rinkeby --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ subgraph-rinkeby.yaml",
     "prettier": "./node_modules/.bin/prettier —-write '**/*.ts'"
   },
