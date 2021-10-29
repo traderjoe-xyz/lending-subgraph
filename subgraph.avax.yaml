@@ -26,7 +26,7 @@ dataSources:
         - name: JToken
           file: ./node_modules/@traderjoe-xyz/lending/abi/JToken.json
         - name: PriceOracle
-          file: ./node_modules/@traderjoe-xyz/lending/abi/PriceOracle.json
+          file: ./node_modules/@traderjoe-xyz/lending/abi/PriceOracleProxyUSD.json
         - name: ERC20
           file: ./abis/Erc20.json
         - name: JWrappedNative
@@ -69,7 +69,7 @@ templates:
         - name: JToken
           file: ./node_modules/@traderjoe-xyz/lending/abi/JToken.json
         - name: PriceOracle
-          file: ./node_modules/@traderjoe-xyz/lending/abi/PriceOracle.json
+          file: ./node_modules/@traderjoe-xyz/lending/abi/PriceOracleProxyUSD.json
         - name: ERC20
           file: ./abis/Erc20.json
         - name: JWrappedNative
