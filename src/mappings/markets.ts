@@ -39,7 +39,7 @@ let jUSDCAddress =
 
 let secondsPerYear = '31536000'
 
-let secondsPerTenMin = 60
+let secondsPerTenMin = 600
 
 // Used for all jERC20 contracts
 function getUnderlyingPriceUSD(
