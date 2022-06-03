@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Joetroller
-    network: {{ network }} 
+    network: fuji 
     source:
-      address: "{{ address }}"
+      address: "0xf817f74bb514cb0AF7d3b56299c33C33895630f2"
       abi: Joetroller
-      startBlock: {{ startBlock }}
+      startBlock: 10052795
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -53,7 +53,7 @@ dataSources:
 templates:
   - name: JToken
     kind: ethereum/contract
-    network: {{ network }} 
+    network: fuji 
     source:
       abi: JToken
     mapping:
@@ -99,7 +99,7 @@ templates:
           handler: handleNewMarketInterestRateModel
   - name: JCollateralCapErc20 
     kind: ethereum/contract
-    network: {{ network }} 
+    network: fuji 
     source:
       abi: JCollateralCapErc20
     mapping:
